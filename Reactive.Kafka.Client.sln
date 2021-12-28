@@ -1,42 +1,38 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reactive.Kafka", "src\Reactive.Kafka.csproj", "{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reactive.Kafka", "src\Reactive.Kafka.csproj", "{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveKafkaConsumer", "examples\ReactiveKafkaConsumer\ReactiveKafkaConsumer.csproj", "{27EB7666-EC95-4F7A-B61D-20FB55CC196C}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D926F189-DA5B-46DD-A47B-4E555A014234}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reactive.Kafka.Client.UnitTests", "test\Reactive.Kafka.Client.UnitTests\Reactive.Kafka.Client.UnitTests.csproj", "{BEE7F553-8155-4B2D-9734-E75270E5DDD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "examples\WorkerService\WorkerService.csproj", "{ACBFA85F-9036-4D78-8D0C-342C88E11350}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF0005F9-A0CB-4F7B-8794-B2596FF1EB07}.Release|Any CPU.Build.0 = Release|Any CPU
-		{27EB7666-EC95-4F7A-B61D-20FB55CC196C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{27EB7666-EC95-4F7A-B61D-20FB55CC196C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{27EB7666-EC95-4F7A-B61D-20FB55CC196C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{27EB7666-EC95-4F7A-B61D-20FB55CC196C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BEE7F553-8155-4B2D-9734-E75270E5DDD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BEE7F553-8155-4B2D-9734-E75270E5DDD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BEE7F553-8155-4B2D-9734-E75270E5DDD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BEE7F553-8155-4B2D-9734-E75270E5DDD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACBFA85F-9036-4D78-8D0C-342C88E11350}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACBFA85F-9036-4D78-8D0C-342C88E11350}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACBFA85F-9036-4D78-8D0C-342C88E11350}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACBFA85F-9036-4D78-8D0C-342C88E11350}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{27EB7666-EC95-4F7A-B61D-20FB55CC196C} = {D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}
-		{BEE7F553-8155-4B2D-9734-E75270E5DDD0} = {D926F189-DA5B-46DD-A47B-4E555A014234}
+		{ACBFA85F-9036-4D78-8D0C-342C88E11350} = {D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {943B1563-A225-4535-9ED1-25A6C02A4ED3}
 	EndGlobalSection
 EndGlobal
