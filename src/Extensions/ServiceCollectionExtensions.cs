@@ -1,6 +1,5 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
-using Reactive.Kafka.Attributes;
 using Reactive.Kafka.Interfaces;
 using System.Reflection;
 
@@ -63,15 +62,13 @@ namespace Reactive.Kafka.Extensions
                 }
 
                 var builder = new ConsumerBuilder<string, string>(config);      
-                var built = builder.Build();
+                var consumer = builder.Build();
 
                 type.GetMethod("OnConsumerConfiguration")?
-                    .Invoke(consumerInstance, new object[] { built });
+                    .Invoke(consumerInstance, new object[] { consumer });
 
-                //TODO: Passar IConsumer<string, string> como paramento do construtor
                 object consumerWrapperInstance = ActivatorUtilities
-                    .CreateInstance(provider, consumerWrapperGenericType, new object[] { built });
-
+                    .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer });
 
                 EventInfo eventInfoOnMessage = consumerWrapperGenericType.GetEvent("OnMessage");
                 EventInfo eventInfoOnError = consumerWrapperGenericType.GetEvent("OnError");
@@ -101,16 +98,6 @@ namespace Reactive.Kafka.Extensions
                 }
             }
         }
-
-
-        private static Task ConsumerBuider()
-        {
-            return new Task(() =>
-            {
-
-            }, TaskCreationOptions.LongRunning);
-        }
-
         #endregion
     }
 }

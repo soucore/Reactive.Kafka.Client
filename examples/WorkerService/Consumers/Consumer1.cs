@@ -6,19 +6,26 @@ namespace WorkerService.Consumers
 {
     public class Consumer1 : IKafkaConsumer<Message>, IKafkaConsumerBuilder
     {
-        public void Consume(object sender, KafkaEventArgs<Message> @event)
-        {
-            Console.WriteLine($"[{Environment.CurrentManagedThreadId}] [Key= {@event.Key}] [Message= {@event.Message}]");
-        }
+        private readonly ILogger<Consumer1> _logger;
 
-        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
+        public Consumer1(ILogger<Consumer1> logger)
         {
-            consumer.Subscribe("teste-topic");
+            _logger = logger;
         }
 
         public void OnConsumerBuilder(ConsumerConfig config)
         {
             config.GroupId = "Grupo1";
+        }
+
+        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
+        {
+            consumer.Subscribe("teste-topicc");
+        }
+
+        public void Consume(object sender, KafkaEventArgs<Message> @event)
+        {
+            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
         }
     }
 }

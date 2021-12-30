@@ -8,10 +8,8 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         services.AddReactiveKafkaConsumer(config =>
         {
-            config.BootstrapServers = "192.168.29.10:9092";
+            config.BootstrapServers = "localhost:9092";
         });
-
-
     })
     .Build();
 

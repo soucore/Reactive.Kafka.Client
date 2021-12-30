@@ -4,11 +4,9 @@ namespace Reactive.Kafka.Helpers
 {
     public static class Convert
     {
-        public static bool TryChangeType<T>(object? value, out T output)
+        public static bool TryChangeType<T>(object value, out T output)
         {
             output = default;
-
-            if (value == null) return false;
 
             try
             {

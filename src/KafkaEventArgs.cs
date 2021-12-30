@@ -7,6 +7,7 @@
             Key = key;
             Message = message;
         }
+
         public string Key { get; }
         public T Message { get; }
     }
