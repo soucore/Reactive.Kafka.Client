@@ -25,14 +25,14 @@ namespace Reactive.Kafka.Extensions
 
             assembly ??= Assembly.GetCallingAssembly();
 
-            ApplyConsumersFromAssembly(
+            ApplyConsumersFromAssembly2(
                 services.BuildServiceProvider(), assembly);
 
             return services;
         }
 
-        #region Non-Public Methods
-        private static void ApplyConsumersFromAssembly(IServiceProvider provider, Assembly assembly)
+        #region Non-Public Methods        
+        private static void ApplyConsumersFromAssembly2(IServiceProvider provider, Assembly assembly)
         {
             IEnumerable<Type> types = assembly
                 .GetTypes()
@@ -54,14 +54,10 @@ namespace Reactive.Kafka.Extensions
                 Type consumerWrapperGenericType = typeof(ConsumerWrapper<>)
                     .MakeGenericType(genericTypeArgumentMessage);
 
-                var isIKafkaConsumerBuilder = type.GetInterface(typeof(IKafkaConsumerBuilder).Name);
-                if (isIKafkaConsumerBuilder is not null)
-                {
-                    type.GetMethod("OnConsumerBuilder")?
-                        .Invoke(consumerInstance, new object[] { config });
-                }
+                type.GetMethod("OnConsumerBuilder")?
+                    .Invoke(consumerInstance, new object[] { config });
 
-                var builder = new ConsumerBuilder<string, string>(config);      
+                var builder = new ConsumerBuilder<string, string>(config);
                 var consumer = builder.Build();
 
                 type.GetMethod("OnConsumerConfiguration")?
