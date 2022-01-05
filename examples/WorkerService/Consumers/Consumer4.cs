@@ -19,7 +19,7 @@ namespace WorkerService.Consumers
 
         public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
-            consumer.Subscribe("topic100");
+            consumer.Subscribe("topic900");
         }
 
         public override void OnConsumerBuilder(ConsumerConfig builder)

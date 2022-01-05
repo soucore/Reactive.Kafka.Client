@@ -4,7 +4,7 @@ using Reactive.Kafka.Interfaces;
 
 namespace Reactive.Kafka
 {
-    public abstract class ConsumerBase<T> : IKafkaConsumer<T>
+    public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError
     {
         public virtual void OnConsumerBuilder(ConsumerConfig builder) { }
         public virtual void ConsumeError(object sender, KafkaConsumerError consumerError) { }

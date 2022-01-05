@@ -1,9 +1,10 @@
 ﻿using Confluent.Kafka;
 using Reactive.Kafka;
+using Reactive.Kafka.Interfaces;
 
 namespace WorkerService.Consumers
 {
-    public class Consumer3 : ConsumerBase<Message>
+    public class Consumer3 : IKafkaConsumer<Message>, IKafkaConsumerBuilder
     {
         public Consumer3(ILogger<Consumer3> logger)
         {
@@ -12,18 +13,17 @@ namespace WorkerService.Consumers
 
         public ILogger<Consumer3> Logger { get; }
 
-        public override void OnConsumerBuilder(ConsumerConfig builder)
+        public void OnConsumerBuilder(ConsumerConfig builder)
         {
             builder.GroupId = "Group100";
-            base.OnConsumerBuilder(builder);
         }
 
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
+        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
-            consumer.Subscribe("topic100");
+            consumer.Subscribe("topic900");
         }
 
-        public override void Consume(object sender, KafkaEventArgs<Message> @event)
+        public void Consume(object sender, KafkaEventArgs<Message> @event)
         {
             Logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
         }

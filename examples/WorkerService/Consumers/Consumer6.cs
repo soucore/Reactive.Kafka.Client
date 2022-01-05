@@ -5,16 +5,16 @@ using Reactive.Kafka.Interfaces;
 
 namespace WorkerService.Consumers
 {
-    public class Consumer5 : IKafkaConsumer<string>, IKafkaConsumerBuilder, IKafkaConsumerError
+    public class Consumer6 : IKafkaConsumer<Message>, IKafkaConsumerBuilder, IKafkaConsumerError
     {
-        public Consumer5(ILogger<Consumer5> logger)
+        public Consumer6(ILogger<Consumer6> logger)
         {
             Logger = logger;
         }
 
-        public ILogger<Consumer5> Logger { get; }
+        public ILogger<Consumer6> Logger { get; }
 
-        public void Consume(object sender, KafkaEventArgs<string> @event)
+        public void Consume(object sender, KafkaEventArgs<Message> @event)
         {
             Logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
         }
@@ -31,7 +31,7 @@ namespace WorkerService.Consumers
 
         public void OnConsumerBuilder(ConsumerConfig builder)
         {
-            builder.GroupId = "Group100";
+            builder.GroupId = "Group1";
         }
     }
 }
