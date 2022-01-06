@@ -3,30 +3,32 @@ using Reactive.Kafka;
 using Reactive.Kafka.Errors;
 using Reactive.Kafka.Interfaces;
 
-namespace WorkerService.Consumers
+namespace UsingInterfaces.Consumers
 {
-    public class Consumer2 : IKafkaConsumer<Message>, IKafkaConsumerBuilder, IKafkaConsumerError
+    public class Consumer1 : IKafkaConsumer<string>, IKafkaConsumerBuilder, IKafkaConsumerError
     {
-        private readonly ILogger<Consumer2> _logger;
+        private readonly ILogger<Consumer1> _logger;
 
-        public Consumer2(ILogger<Consumer2> logger)
+        // You can inject anything from DI
+        public Consumer1(ILogger<Consumer1> logger)
         {
             _logger = logger;
         }
 
-        public void OnConsumerBuilder(ConsumerConfig config)
+        public void OnConsumerBuilder(ConsumerConfig builder)
         {
-            config.GroupId = "Group2";
-            config.AutoOffsetReset = AutoOffsetReset.Earliest;
+            builder.GroupId = "Group1";
+            builder.AutoOffsetReset = AutoOffsetReset.Latest;
         }
 
         public void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
-            consumer.Subscribe("teste-topic");
+            consumer.Subscribe("topic1");
         }
 
-        public void Consume(object sender, KafkaEventArgs<Message> @event)
+        public void Consume(object sender, KafkaEventArgs<string> @event)
         {
+            // log thread for analysis purpose
             _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
         }
 

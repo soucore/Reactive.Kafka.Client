@@ -4,6 +4,10 @@ namespace Reactive.Kafka.Interfaces
 {
     public interface IKafkaConsumerBuilder
     {
-        void OnConsumerBuilder(ConsumerConfig config);
+        /// <summary>
+        /// Kafka consumer configuration.
+        /// </summary>
+        /// <param name="builder">Configuration object</param>
+        void OnConsumerBuilder(ConsumerConfig builder);
     }
 }
