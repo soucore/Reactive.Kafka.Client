@@ -103,7 +103,6 @@ namespace Reactive.Kafka.Extensions
         /// <param name="consumerType">Consumer type object</param>
         private static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType)
         {
-
             int? partitions = null;
             int consumers = 0;
 

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using ServiceStack.Text;
 
 namespace Reactive.Kafka.Helpers
 {
@@ -25,7 +25,7 @@ namespace Reactive.Kafka.Helpers
 
             try
             {
-                output = JsonConvert.DeserializeObject<T>(value);
+                output = JsonSerializer.DeserializeFromString<T>(value);
                 return true;
             }
             catch
