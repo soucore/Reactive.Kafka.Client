@@ -2,11 +2,14 @@
 using Microsoft.Extensions.Logging;
 using Reactive.Kafka.Errors;
 using Reactive.Kafka.Exceptions;
+using Reactive.Kafka.Interfaces;
+using System;
+using System.Threading.Tasks;
 using Convert = Reactive.Kafka.Helpers.Convert;
 
 namespace Reactive.Kafka
 {
-    internal sealed class ConsumerWrapper<T>
+    internal sealed class ConsumerWrapper<T> : IConsumerWrapper
     {
         #region Events
         public event EventHandler<KafkaEventArgs<T>> OnMessage;

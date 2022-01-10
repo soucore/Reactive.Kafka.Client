@@ -1,6 +1,10 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Reactive.Kafka.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Reactive.Kafka.Extensions
@@ -8,6 +12,7 @@ namespace Reactive.Kafka.Extensions
     public static class ServiceCollectionExtensions
     {
         private static readonly IDictionary<string, int> partitionsDict = new Dictionary<string, int>();
+        private static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
 
         public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string groupId = default)
         {
@@ -23,6 +28,7 @@ namespace Reactive.Kafka.Extensions
 
             groupId ??= Guid.NewGuid().ToString();
 
+            services.AddSingleton(listConsumerWrapper);
             services.AddTransient(provider =>
             {
                 return new ConsumerConfig()
@@ -110,7 +116,7 @@ namespace Reactive.Kafka.Extensions
             {
                 IConsumer<string, string> consumer = ApplyReflection(provider, consumerType);
 
-                if (!partitions.HasValue)
+                if (!partitions.HasValue && consumer is not null)
                 {
                     string topic = consumer.Subscription.FirstOrDefault();
 
@@ -124,17 +130,19 @@ namespace Reactive.Kafka.Extensions
 
         private static IConsumer<string, string> ApplyReflection(IServiceProvider provider, Type type)
         {
-            var config = provider.GetRequiredService<ConsumerConfig>();
-
-            object consumerInstance = ActivatorUtilities
-                .CreateInstance(provider, type);
-
             Type genericTypeArgumentMessage = type
                 .GetInterface(typeof(IKafkaConsumer<>).Name, true)?
                 .GenericTypeArguments[0];
 
+            if (genericTypeArgumentMessage is null) return default;
+
             Type consumerWrapperGenericType = typeof(ConsumerWrapper<>)
                 .MakeGenericType(genericTypeArgumentMessage);
+
+            var config = provider.GetRequiredService<ConsumerConfig>();
+
+            object consumerInstance = ActivatorUtilities
+                .CreateInstance(provider, type);
 
             type.GetMethod("OnConsumerBuilder")?
                 .Invoke(consumerInstance, new object[] { config });
@@ -175,6 +183,7 @@ namespace Reactive.Kafka.Extensions
                 eventInfoOnError.AddEventHandler(consumerWrapperInstance, consumeErrorDelegate);
             }
 
+            listConsumerWrapper.Add((IConsumerWrapper)consumerWrapperInstance);
             return consumer;
         }
 
@@ -185,7 +194,13 @@ namespace Reactive.Kafka.Extensions
             Metadata meta = null;
 
             meta = adminClient.GetMetadata(TimeSpan.FromSeconds(20));
-            meta.Topics.ForEach(topicMetada => partitionsDict.Add(topicMetada.Topic, topicMetada.Partitions.Count));
+            meta.Topics.ForEach(topicMetada =>
+            {
+                if (partitionsDict.ContainsKey(topicMetada.Topic))
+                    partitionsDict[topicMetada.Topic] = topicMetada.Partitions.Count;
+                else
+                    partitionsDict.Add(topicMetada.Topic, topicMetada.Partitions.Count);
+            });
         }
         #endregion
     }

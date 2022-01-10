@@ -1,4 +1,6 @@
-﻿namespace Reactive.Kafka.Exceptions
+﻿using System;
+
+namespace Reactive.Kafka.Exceptions
 {
     public class KafkaConsumerException : Exception
     {
