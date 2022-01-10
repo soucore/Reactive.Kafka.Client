@@ -17,8 +17,10 @@ namespace Reactive.Kafka
 
         public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer)
         {
-            _logger = loggerFactory.CreateLogger("Reactive.Kafka.ConsumerWrapper");
-            _logger.LogInformation($"Starting consumer {consumer.Name}");
+            _logger = loggerFactory.CreateLogger("Reactive.Kafka");
+
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Starting consumer {ConsumerName}", consumer.Name);
 
             Consumer = consumer;
             ConsumerStart().Start();
@@ -28,7 +30,8 @@ namespace Reactive.Kafka
 
         public Task ConsumerStart()
         {
-            _logger.LogInformation($"Initializing consumer {Consumer.Name}");
+            if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Initializing consumer {ConsumerName}", Consumer.Name);
 
             return new Task(() =>
             {
@@ -40,16 +43,21 @@ namespace Reactive.Kafka
                     {
                         var result = Consumer.Consume();
 
-                        _logger.LogDebug($"Message received: {result.Message.Value}");
+                        if (_logger.IsEnabled(LogLevel.Debug))
+                            _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
 
                         if (Convert.TryChangeType(result.Message.Value, out message) || Convert.TrySerializeType(result.Message.Value, out message))
                         {
-                            _logger.LogDebug($"Message converted successfully to {typeof(T).Name}");
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                                _logger.LogDebug("Message converted successfully to {TypeName}", typeof(T).Name);
+
                             OnMessage?.Invoke(Consumer, new KafkaEventArgs<T>(result.Message.Key, message));
                         }
                         else
                         {
-                            _logger.LogDebug($"Unable convert message to {typeof(T).Name}");
+                            if (_logger.IsEnabled(LogLevel.Debug))
+                                _logger.LogDebug("Unable convert message to {TypeName}", typeof(T).Name);
+
                             throw new KafkaConsumerException(result.Message.Value);
                         }
                     }
@@ -65,8 +73,11 @@ namespace Reactive.Kafka
                     }
                     catch (ConsumeException ex)
                     {
-                        _logger.LogError($"Unable to consume messages, consumer {Consumer.Name} shutting down.");
-                        _logger.LogError(ex.Message);
+                        if (_logger.IsEnabled(LogLevel.Error))
+                        {
+                            _logger.LogError("Unable to consume messages, consumer {ConsumerName} shutting down.", Consumer.Name);
+                            _logger.LogError("{Message}", ex.Message);
+                        }
                     }
                     catch (Exception)
                     {
