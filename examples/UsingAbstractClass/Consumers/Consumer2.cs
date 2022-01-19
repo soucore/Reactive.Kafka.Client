@@ -1,6 +1,5 @@
 ﻿using Confluent.Kafka;
 using Reactive.Kafka;
-using Reactive.Kafka.Errors;
 
 namespace UsingAbstractClass.Consumers
 {
@@ -11,17 +10,6 @@ namespace UsingAbstractClass.Consumers
         public Consumer2(ILogger<Consumer2> logger)
         {
             _logger = logger;
-        }
-
-        public override void Consume(object sender, KafkaEventArgs<string> @event)
-        {
-            // log thread for analysis purpose
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
-        }
-
-        public override void ConsumeError(object sender, KafkaConsumerError consumerError)
-        {
-            _logger.LogError($"[Thread: {Environment.CurrentManagedThreadId}] {consumerError.Exception.Message}");
         }
 
         public override void OnConsumerBuilder(ConsumerConfig builder)
@@ -35,6 +23,13 @@ namespace UsingAbstractClass.Consumers
         public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
             consumer.Subscribe("topic2");
+        }
+
+        public override Task Consume(object sender, KafkaMessage<string> kafkaMessage, Commit commit)
+        {
+            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {kafkaMessage.Message}");
+
+            return Task.CompletedTask;
         }
     }
 }

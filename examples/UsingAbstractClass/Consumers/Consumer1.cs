@@ -12,15 +12,16 @@ namespace UsingAbstractClass.Consumers
             _logger = logger;
         }
 
-        public override void Consume(object sender, KafkaEventArgs<Message> @event)
-        {
-            // log thread for analysis purpose
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
-        }
-
         public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
             consumer.Subscribe("topic1");
+        }
+
+        public override Task Consume(object sender, KafkaMessage<Message> kafkaMessage, Commit commit)
+        {
+            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@kafkaMessage.Message}");
+            
+            return Task.CompletedTask;
         }
     }
 }

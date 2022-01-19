@@ -7,6 +7,7 @@ using Reactive.Kafka.Validations;
 using Reactive.Kafka.Validations.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Convert = Reactive.Kafka.Helpers.Convert;
 
@@ -14,7 +15,7 @@ namespace Reactive.Kafka
 {
     #region Custom Delegates
     public delegate List<TopicPartitionOffset> Commit();
-    public delegate Task EventHandlerAsync<TMessage>(object sender, TMessage e, Commit commit);
+    public delegate Task EventHandlerAsync<in TMessage>(object sender, TMessage e, Commit commit);
     #endregion
 
     internal sealed class ConsumerWrapper<T> : IConsumerWrapper
@@ -52,8 +53,6 @@ namespace Reactive.Kafka
             {
                 while (true)
                 {
-                    T message = default;
-
                     try
                     {
                         var result = Consumer.Consume();
@@ -61,6 +60,7 @@ namespace Reactive.Kafka
                         if (_logger.IsEnabled(LogLevel.Debug))
                             _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
 
+                        T message = default;
                         if (Convert.TryChangeType(result.Message.Value, out message) || Convert.TrySerializeType(result.Message.Value, out message))
                         {
                             await SuccessfulConversion(message, result);
@@ -70,12 +70,12 @@ namespace Reactive.Kafka
                             await UnsuccessfulConversion(result);
                         }
                     }
-                    catch (Exception ex) when (ex is KafkaConsumerException || ex is KafkaValidationException)
+                    catch (Exception ex) when (ex is KafkaConsumerException or KafkaValidationException)
                     {
                         if (OnError is null)
                             continue;
 
-                        await OnError.Invoke(this, new(ex), Consumer.Commit);
+                        await OnError.Invoke(this, new KafkaConsumerError(ex), Consumer.Commit);
                     }
                     catch (ConsumeException ex)
                     {
@@ -102,7 +102,7 @@ namespace Reactive.Kafka
             if (_validators is not null)
                 MessageValidation(message, result);
 
-            await OnMessage?.Invoke(Consumer, new KafkaMessage<T>(result.Message.Key, message), Consumer.Commit);
+            await OnMessage?.Invoke(Consumer, new KafkaMessage<T>(result.Message.Key, message), Consumer.Commit)!;
         }
 
         private Task UnsuccessfulConversion(ConsumeResult<string, string> result)
@@ -115,11 +115,8 @@ namespace Reactive.Kafka
 
         private void MessageValidation(T message, ConsumeResult<string, string> result)
         {
-            foreach (IKafkaMessageValidator<T> validator in _validators)
-            {
-                if (!validator.Validate(message))
-                    throw new KafkaValidationException(result.Message.Value);
-            }
+            if (_validators.Cast<IKafkaMessageValidator<T>>().Any(validator => !validator.Validate(message)))
+                throw new KafkaValidationException(result.Message.Value);
         }
         #endregion
     }
