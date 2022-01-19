@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Interfaces
 {
@@ -9,7 +10,7 @@ namespace Reactive.Kafka.Interfaces
         /// </summary>
         /// <param name="sender">Kafka consumer object for analysis purpose</param>
         /// <param name="event">Message received from broker</param>
-        void Consume(object sender, KafkaEventArgs<T> @event);
+        Task Consume(object sender, KafkaMessage<T> kafkaMessage, Commit commit);
         void OnConsumerConfiguration(IConsumer<string, string> consumer);
     }
 }

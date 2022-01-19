@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Reactive.Kafka.Interfaces;
+using Reactive.Kafka.Validations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,15 +46,17 @@ namespace Reactive.Kafka.Extensions
 
         public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, string groupId = default)
         {
+            if (services is null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
             if (bootstrapServer is null)
             {
                 throw new ArgumentNullException(nameof(bootstrapServer));
             }
 
-            if (groupId is null)
-            {
-                groupId = Guid.NewGuid().ToString();
-            }
+            groupId ??= Guid.NewGuid().ToString();
 
             return services.AddReactiveKafkaConsumer(config =>
             {
@@ -153,8 +155,22 @@ namespace Reactive.Kafka.Extensions
             type.GetMethod("OnConsumerConfiguration")?
                 .Invoke(consumerInstance, new object[] { consumer });
 
+            object kafkaValidations = null;
+
+            MethodInfo validationMethod = type.GetMethod("OnValidation");
+            if (validationMethod is not null)
+            {
+                Type kafkaValidationsType = typeof(KafkaValidators<>)
+                    .MakeGenericType(genericTypeArgumentMessage);
+
+                kafkaValidations = Activator
+                    .CreateInstance(kafkaValidationsType, new[] { provider });
+
+                validationMethod.Invoke(consumerInstance, new object[] { kafkaValidations });
+            }
+
             object consumerWrapperInstance = ActivatorUtilities
-                .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer });
+                .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer, kafkaValidations });
 
             EventInfo eventInfoOnMessage = consumerWrapperGenericType.GetEvent("OnMessage");
             EventInfo eventInfoOnError = consumerWrapperGenericType.GetEvent("OnError");
