@@ -1,8 +1,8 @@
 ﻿namespace Reactive.Kafka
 {
-    public class KafkaEventArgs<T>
+    public sealed class KafkaMessage<T>
     {
-        public KafkaEventArgs(string key, T message)
+        public KafkaMessage(string key, T message)
         {
             Key = key;
             Message = message;
