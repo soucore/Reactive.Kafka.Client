@@ -29,13 +29,13 @@ namespace Reactive.Kafka
 
         public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaValidators<T> validators)
         {
-            _validators = validators.Count > 0
+            _validators = validators?.Count > 0
                 ? validators : null;
 
             _logger = loggerFactory.CreateLogger("Reactive.Kafka");
 
             if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Starting consumer {ConsumerName}", consumer.Name);
+                _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
 
             Consumer = consumer;
             ConsumerStart().Start();
@@ -75,7 +75,7 @@ namespace Reactive.Kafka
                         if (OnError is null)
                             continue;
 
-                        await OnError.Invoke(this, new(ex), Consumer.Commit);
+                        await OnError.Invoke(this, new KafkaConsumerError(ex), Consumer.Commit);
                     }
                     catch (ConsumeException ex)
                     {
@@ -118,7 +118,12 @@ namespace Reactive.Kafka
             foreach (IKafkaMessageValidator<T> validator in _validators)
             {
                 if (!validator.Validate(message))
+                {
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                        _logger.LogDebug("Message could not pass on {Validator} validator.", validator.GetType().Name);
+
                     throw new KafkaValidationException(result.Message.Value);
+                }
             }
         }
         #endregion
