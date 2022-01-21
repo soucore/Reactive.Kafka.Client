@@ -27,12 +27,14 @@ public class HelperConvertTest
     {
         // Arrange
         List<int> value = new();
+        const int expected = 0;
         
         // Act
-        var isChange = Convert.TryChangeType(value, out int _);
+        var isChange = Convert.TryChangeType(value, out int output);
         
         // Assert
         Assert.False(isChange);
+        Assert.True(output == expected);
     }
     
     [Fact]
@@ -62,5 +64,6 @@ public class HelperConvertTest
         
         // Assert
         Assert.False(result);
+        Assert.Null(output);
     }
 }
