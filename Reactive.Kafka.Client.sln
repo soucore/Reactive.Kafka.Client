@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UsingAbstractClass", "examp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsumerPerPartition", "examples\ConsumerPerPartition\ConsumerPerPartition.csproj", "{24FE89C1-F4C8-4177-942B-7584E8C6125A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reactive.Kafka.Tests", "test\Reactive.Kafka.Tests\Reactive.Kafka.Tests.csproj", "{7088103F-8D1F-44B2-8355-17F56E6DE1F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reactive.Kafka.Tests", "test\Reactive.Kafka.Tests\Reactive.Kafka.Tests.csproj", "{7088103F-8D1F-44B2-8355-17F56E6DE1F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

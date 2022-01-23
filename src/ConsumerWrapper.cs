@@ -3,8 +3,6 @@ using Microsoft.Extensions.Logging;
 using Reactive.Kafka.Errors;
 using Reactive.Kafka.Exceptions;
 using Reactive.Kafka.Interfaces;
-using Reactive.Kafka.Validations;
-using Reactive.Kafka.Validations.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,31 +12,30 @@ namespace Reactive.Kafka
 {
     #region Custom Delegates
     public delegate List<TopicPartitionOffset> Commit();
-    public delegate Task EventHandlerAsync<TMessage>(object sender, TMessage e, Commit commit);
+    public delegate Task EventHandlerAsync<in TMessage>(TMessage e, Commit commit);
     #endregion
 
-    internal sealed class ConsumerWrapper<T> : IConsumerWrapper
+    public sealed class ConsumerWrapper<T> : IConsumerWrapper
     {
         #region Events
-        public event EventHandlerAsync<KafkaMessage<T>> OnMessage;
+        public event Func<string, string> OnBeforeSerialization;
+        public event Func<T, T> OnAfterSerialization;
+        public event EventHandlerAsync<ConsumerMessage<T>> OnMessage;
         public event EventHandlerAsync<KafkaConsumerError> OnError;
         #endregion
 
-        private readonly KafkaValidators<T> _validators;
         private readonly ILogger _logger;
 
-        public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaValidators<T> validators)
+        public ConsumerWrapper() { }
+        public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer)
         {
-            _validators = validators?.Count > 0
-                ? validators : null;
-
             _logger = loggerFactory.CreateLogger("Reactive.Kafka");
 
             if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
 
             Consumer = consumer;
-            ConsumerStart().Start();
+            ConsumerStart();
         }
 
         public IConsumer<string, string> Consumer { get; }
@@ -48,12 +45,10 @@ namespace Reactive.Kafka
             if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Initializing consumer {ConsumerName}", Consumer.Name);
 
-            return new Task(async () =>
+            return Task.Factory.StartNew(() =>
             {
                 while (true)
                 {
-                    T message = default;
-
                     try
                     {
                         var result = Consumer.Consume();
@@ -61,21 +56,14 @@ namespace Reactive.Kafka
                         if (_logger.IsEnabled(LogLevel.Debug))
                             _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
 
-                        if (Convert.TryChangeType(result.Message.Value, out message) || Convert.TrySerializeType(result.Message.Value, out message))
-                        {
-                            await SuccessfulConversion(message, result);
-                        }
-                        else
-                        {
-                            await UnsuccessfulConversion(result);
-                        }
+                        _ = ConvertMessage(result.Message);
                     }
-                    catch (Exception ex) when (ex is KafkaConsumerException || ex is KafkaValidationException)
+                    catch (KafkaConsumerException ex)
                     {
-                        if (OnError is null)
+                        if (OnError is not null)
                             continue;
 
-                        await OnError.Invoke(this, new KafkaConsumerError(ex), Consumer.Commit);
+                        _ = HandleException(ex);
                     }
                     catch (ConsumeException ex)
                     {
@@ -93,38 +81,45 @@ namespace Reactive.Kafka
             }, TaskCreationOptions.LongRunning);
         }
 
-        #region Non-Public Methods
-        private async Task SuccessfulConversion(T message, ConsumeResult<string, string> result)
+        public async Task ConvertMessage(Message<string, string> kafkaMessage)
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("Message converted successfully to {TypeName}", typeof(T).Name);
+            if (OnBeforeSerialization is not null)
+                kafkaMessage.Value = OnBeforeSerialization.Invoke(kafkaMessage.Value);
 
-            if (_validators is not null)
-                MessageValidation(message, result);
-
-            await OnMessage?.Invoke(Consumer, new KafkaMessage<T>(result.Message.Key, message), Consumer.Commit);
-        }
-
-        private Task UnsuccessfulConversion(ConsumeResult<string, string> result)
-        {
-            if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("Unable convert message to {TypeName}", typeof(T).Name);
-
-            throw new KafkaConsumerException(result.Message.Value);
-        }
-
-        private void MessageValidation(T message, ConsumeResult<string, string> result)
-        {
-            foreach (IKafkaMessageValidator<T> validator in _validators)
+            T message = default;
+            if (Convert.TryChangeType(kafkaMessage.Value, out message) || Convert.TrySerializeType(kafkaMessage.Value, out message))
             {
-                if (!validator.Validate(message))
-                {
-                    if (_logger.IsEnabled(LogLevel.Debug))
-                        _logger.LogDebug("Message could not pass on {Validator} validator.", validator.GetType().Name);
+                if (OnAfterSerialization is not null)
+                    message = OnAfterSerialization.Invoke(message);
 
-                    throw new KafkaValidationException(result.Message.Value);
-                }
+                await SuccessfulConversion(message, kafkaMessage);
             }
+            else
+            {
+                UnsuccessfulConversion(kafkaMessage);
+            }
+        }
+
+        public async Task HandleException(Exception exception)
+        {
+            await OnError.Invoke(new KafkaConsumerError(exception), Consumer.Commit);
+        }
+
+        #region Non-Public Methods
+        private async Task SuccessfulConversion(T message, Message<string, string> kafkaMessage)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
+
+            await OnMessage?.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
+        }
+
+        private void UnsuccessfulConversion(Message<string, string> kafkaMessage)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Unable convert message to '{TypeName}'", typeof(T).Name);
+
+            throw new KafkaConsumerException(kafkaMessage.Value);
         }
         #endregion
     }

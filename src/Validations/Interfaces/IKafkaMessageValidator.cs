@@ -1,8 +1,10 @@
-﻿namespace Reactive.Kafka.Validations.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace Reactive.Kafka.Validations.Interfaces
 {
     public interface IKafkaMessageValidator<T> : IKafkaMessageValidator
     {
-        bool Validate(T message);
+        ValueTask<bool> Validate(T message);
     }
 
     public interface IKafkaMessageValidator { }

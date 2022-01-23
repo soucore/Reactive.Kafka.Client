@@ -9,19 +9,18 @@ namespace UsingInterfaces.Consumers
         private readonly ILogger<Consumer2> _logger;
 
         public Consumer2(ILogger<Consumer2> logger)
+            => _logger = logger;
+
+        public Task Consume(ConsumerMessage<string> consumerMessage, Commit commit)
         {
-            _logger = logger;
+            _logger.LogInformation("Message ==> {Message}", consumerMessage.Message);
+            
+            return Task.CompletedTask;
         }
 
         public void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
-            consumer.Subscribe("topic2");
-        }
-
-        public void Consume(object sender, KafkaEventArgs<string> @event)
-        {
-            // log thread for analysis purpose
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
+            consumer.Subscribe("your-topic");
         }
     }
 }
