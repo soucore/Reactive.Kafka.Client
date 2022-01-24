@@ -7,7 +7,7 @@ namespace Reactive.Kafka.Errors
         public KafkaConsumerError(Exception ex)
         {
             Exception = ex;
-            KafkaMessage = ex.Message;
+            KafkaMessage = ex?.Message;
         }
 
         public Exception Exception { get; }
