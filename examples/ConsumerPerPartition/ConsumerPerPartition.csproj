@@ -14,4 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Reactive.Kafka.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Validators\" />
+  </ItemGroup>
 </Project>

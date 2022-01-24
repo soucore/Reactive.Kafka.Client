@@ -8,9 +8,15 @@ namespace Reactive.Kafka.Interfaces
         /// <summary>
         /// Entry point for each kafka message received.
         /// </summary>
-        /// <param name="sender">Kafka consumer object for analysis purpose</param>
-        /// <param name="event">Message received from broker</param>
-        Task Consume(object sender, KafkaMessage<T> kafkaMessage, Commit commit);
+        /// <param name="kafkaMessage">Kafka message containing key and value</param>
+        /// <param name="commit">Offset commit function</param>
+        /// <returns></returns>
+        Task Consume(ConsumerMessage<T> consumerMessage, Commit commit);
+
+        /// <summary>
+        /// Consumer configuration.
+        /// </summary>
+        /// <param name="consumer">Consumer instance</param>
         void OnConsumerConfiguration(IConsumer<string, string> consumer);
     }
 }

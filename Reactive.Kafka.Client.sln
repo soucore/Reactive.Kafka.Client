@@ -9,13 +9,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{D3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D926F189-DA5B-46DD-A47B-4E555A014234}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UsingInterfaces", "examples\UsingInterfaces\UsingInterfaces.csproj", "{827ECD45-6D7D-4CDD-9494-A469BFA75C19}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UsingInterfaces", "examples\UsingInterfaces\UsingInterfaces.csproj", "{827ECD45-6D7D-4CDD-9494-A469BFA75C19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UsingAbstractClass", "examples\UsingAbstractClass\UsingAbstractClass.csproj", "{1D18F003-AB76-4EF5-BF63-04BA92681050}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UsingAbstractClass", "examples\UsingAbstractClass\UsingAbstractClass.csproj", "{1D18F003-AB76-4EF5-BF63-04BA92681050}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsumerPerPartition", "examples\ConsumerPerPartition\ConsumerPerPartition.csproj", "{24FE89C1-F4C8-4177-942B-7584E8C6125A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsumerPerPartition", "examples\ConsumerPerPartition\ConsumerPerPartition.csproj", "{24FE89C1-F4C8-4177-942B-7584E8C6125A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reactive.Kafka.Tests", "test\Reactive.Kafka.Tests\Reactive.Kafka.Tests.csproj", "{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reactive.Kafka.Tests", "test\Reactive.Kafka.Tests\Reactive.Kafka.Tests.csproj", "{7088103F-8D1F-44B2-8355-17F56E6DE1F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,10 +39,10 @@ Global
 		{24FE89C1-F4C8-4177-942B-7584E8C6125A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24FE89C1-F4C8-4177-942B-7584E8C6125A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24FE89C1-F4C8-4177-942B-7584E8C6125A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7088103F-8D1F-44B2-8355-17F56E6DE1F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7088103F-8D1F-44B2-8355-17F56E6DE1F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7088103F-8D1F-44B2-8355-17F56E6DE1F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7088103F-8D1F-44B2-8355-17F56E6DE1F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -51,7 +51,7 @@ Global
 		{827ECD45-6D7D-4CDD-9494-A469BFA75C19} = {D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}
 		{1D18F003-AB76-4EF5-BF63-04BA92681050} = {D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}
 		{24FE89C1-F4C8-4177-942B-7584E8C6125A} = {D39FE450-D4F8-42D7-A8EA-41C8DB7C52F4}
-		{7281E3AB-FC3C-42C2-BEFA-49AFC1E779E1} = {D926F189-DA5B-46DD-A47B-4E555A014234}
+		{7088103F-8D1F-44B2-8355-17F56E6DE1F7} = {D926F189-DA5B-46DD-A47B-4E555A014234}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {943B1563-A225-4535-9ED1-25A6C02A4ED3}

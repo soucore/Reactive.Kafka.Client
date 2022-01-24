@@ -8,20 +8,18 @@ namespace UsingAbstractClass.Consumers
         private readonly ILogger<Consumer1> _logger;
 
         public Consumer1(ILogger<Consumer1> logger)
+            => _logger = logger;
+
+        public override Task Consume(ConsumerMessage<Message> consumerMessage, Commit commit)
         {
-            _logger = logger;
+            _logger.LogInformation("Message ==> {Message}", consumerMessage.Message);
+
+            return Task.CompletedTask;
         }
 
         public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
         {
-            consumer.Subscribe("topic1");
-        }
-
-        public override Task Consume(object sender, KafkaMessage<Message> kafkaMessage, Commit commit)
-        {
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@kafkaMessage.Message}");
-            
-            return Task.CompletedTask;
+            consumer.Subscribe("your-topic");
         }
     }
 }

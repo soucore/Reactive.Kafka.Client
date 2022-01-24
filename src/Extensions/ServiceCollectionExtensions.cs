@@ -44,6 +44,35 @@ namespace Reactive.Kafka.Extensions
             return services;
         }
 
+        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, string bootstrapServer, int quantity, string groupId = default)
+        {
+            if (services is null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (bootstrapServer is null)
+            {
+                throw new ArgumentNullException(nameof(bootstrapServer));
+            }
+
+            groupId ??= Guid.NewGuid().ToString();
+
+            services.AddSingleton(listConsumerWrapper);
+            services.AddTransient(provider =>
+            {
+                return new ConsumerConfig()
+                {
+                    BootstrapServers = bootstrapServer,
+                    GroupId = groupId
+                };
+            });
+
+            ApplyConsumerPerQuantity(services.BuildServiceProvider(), typeof(T), quantity);
+
+            return services;
+        }
+
         public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, string groupId = default)
         {
             if (services is null)
@@ -72,6 +101,7 @@ namespace Reactive.Kafka.Extensions
                 throw new ArgumentNullException(nameof(setupAction));
             }
 
+            services.AddSingleton(listConsumerWrapper);
             services.AddTransient(provider =>
             {
                 ConsumerConfig config = new();
@@ -90,9 +120,9 @@ namespace Reactive.Kafka.Extensions
 
         #region Non-Public Methods        
         /// <summary>
-        /// Create consumers from supplied assembly.
+        /// Creates consumers from the given assembly.
         /// </summary>
-        /// <param name="provider">Dependency injection provider</param>
+        /// <param name="provider">Dependency injection service provider</param>
         /// <param name="assembly">Assembly from which search will be done</param>
         private static void ApplyConsumersFromAssembly(IServiceProvider provider, Assembly assembly)
         {
@@ -105,9 +135,9 @@ namespace Reactive.Kafka.Extensions
         }
 
         /// <summary>
-        /// Create consumer per partition of specified topic.
+        /// Creates a consumer per partition of specified topic.
         /// </summary>
-        /// <param name="provider">Dependency injection provider</param>
+        /// <param name="provider">Dependency injection service provider</param>
         /// <param name="consumerType">Consumer type object</param>
         private static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType)
         {
@@ -128,6 +158,18 @@ namespace Reactive.Kafka.Extensions
                 }
             }
             while (++consumers < partitions);
+        }
+
+        /// <summary>
+        /// Creates consumers from given quantity.
+        /// </summary>
+        /// <param name="provider">Dependency injection service provider</param>
+        /// <param name="consumerType">Consumer type object</param>
+        /// <param name="quantity">Quantity of consumers</param>
+        private static void ApplyConsumerPerQuantity(IServiceProvider provider, Type consumerType, int quantity)
+        {
+            for (int i = 0; i < quantity; i++)
+                ApplyReflection(provider, consumerType);
         }
 
         private static IConsumer<string, string> ApplyReflection(IServiceProvider provider, Type type)
@@ -155,22 +197,34 @@ namespace Reactive.Kafka.Extensions
             type.GetMethod("OnConsumerConfiguration")?
                 .Invoke(consumerInstance, new object[] { consumer });
 
-            object kafkaValidations = null;
-
-            MethodInfo validationMethod = type.GetMethod("OnValidation");
-            if (validationMethod is not null)
-            {
-                Type kafkaValidationsType = typeof(KafkaValidators<>)
-                    .MakeGenericType(genericTypeArgumentMessage);
-
-                kafkaValidations = Activator
-                    .CreateInstance(kafkaValidationsType, new[] { provider });
-
-                validationMethod.Invoke(consumerInstance, new object[] { kafkaValidations });
-            }
+            if (!consumer.Subscription.Any()) return default;
 
             object consumerWrapperInstance = ActivatorUtilities
-                .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer, kafkaValidations });
+                .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer });
+
+            #region Message Lifecycle
+            EventInfo onBeforeSerializationEvent = consumerWrapperGenericType
+                .GetEvent("OnBeforeSerialization");
+
+            Delegate onBeforeSerializationDelegate = Delegate
+                .CreateDelegate(
+                    onBeforeSerializationEvent.EventHandlerType,
+                    consumerInstance,
+                    type.GetMethod("OnBeforeSerialization"));
+
+            onBeforeSerializationEvent.AddEventHandler(consumerWrapperInstance, onBeforeSerializationDelegate);
+
+            EventInfo onAfterSerializationEvent = consumerWrapperGenericType
+                .GetEvent("OnAfterSerialization");
+
+            Delegate onAfterSerializationDelegate = Delegate
+                .CreateDelegate(
+                    onAfterSerializationEvent.EventHandlerType,
+                    consumerInstance,
+                    type.GetMethod("OnAfterSerialization"));
+
+            onAfterSerializationEvent.AddEventHandler(consumerWrapperInstance, onAfterSerializationDelegate);
+            #endregion
 
             EventInfo eventInfoOnMessage = consumerWrapperGenericType.GetEvent("OnMessage");
             EventInfo eventInfoOnError = consumerWrapperGenericType.GetEvent("OnError");
