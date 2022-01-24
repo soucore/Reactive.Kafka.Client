@@ -26,7 +26,6 @@ namespace Reactive.Kafka
 
         private readonly ILogger _logger;
 
-        public ConsumerWrapper() { }
         public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer)
         {
             _logger = loggerFactory.CreateLogger("Reactive.Kafka");
@@ -111,7 +110,8 @@ namespace Reactive.Kafka
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
 
-            await OnMessage?.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
+            if (OnMessage is not null)
+                await OnMessage.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
         }
 
         private void UnsuccessfulConversion(Message<string, string> kafkaMessage)
