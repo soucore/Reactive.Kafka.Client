@@ -34,7 +34,6 @@ namespace Reactive.Kafka
                 _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
 
             Consumer = consumer;
-            ConsumerStart();
         }
 
         public IConsumer<string, string> Consumer { get; }
