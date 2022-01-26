@@ -1,11 +1,11 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Reactive.Kafka.Interfaces;
-using Reactive.Kafka.Validations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static Reactive.Kafka.Helpers.Reflection;
 
 namespace Reactive.Kafka.Extensions
 {
@@ -203,55 +203,34 @@ namespace Reactive.Kafka.Extensions
                 .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer });
 
             #region Message Lifecycle
-            EventInfo onBeforeSerializationEvent = consumerWrapperGenericType
-                .GetEvent("OnBeforeSerialization");
+            CreateDelegate(
+                consumerWrapperInstance,
+                consumerWrapperGenericType.GetEvent("OnBeforeSerialization"),
+                consumerInstance,
+                type.GetMethod("OnBeforeSerialization"));
 
-            Delegate onBeforeSerializationDelegate = Delegate
-                .CreateDelegate(
-                    onBeforeSerializationEvent.EventHandlerType,
-                    consumerInstance,
-                    type.GetMethod("OnBeforeSerialization"));
-
-            onBeforeSerializationEvent.AddEventHandler(consumerWrapperInstance, onBeforeSerializationDelegate);
-
-            EventInfo onAfterSerializationEvent = consumerWrapperGenericType
-                .GetEvent("OnAfterSerialization");
-
-            Delegate onAfterSerializationDelegate = Delegate
-                .CreateDelegate(
-                    onAfterSerializationEvent.EventHandlerType,
-                    consumerInstance,
-                    type.GetMethod("OnAfterSerialization"));
-
-            onAfterSerializationEvent.AddEventHandler(consumerWrapperInstance, onAfterSerializationDelegate);
+            CreateDelegate(
+                consumerWrapperInstance,
+                consumerWrapperGenericType.GetEvent("OnAfterSerialization"),
+                consumerInstance,
+                type.GetMethod("OnAfterSerialization"));
             #endregion
 
-            EventInfo eventInfoOnMessage = consumerWrapperGenericType.GetEvent("OnMessage");
-            EventInfo eventInfoOnError = consumerWrapperGenericType.GetEvent("OnError");
+            CreateDelegate(
+                consumerWrapperInstance,
+                consumerWrapperGenericType.GetEvent("OnMessage"),
+                consumerInstance,
+                type.GetMethod("Consume"));
 
-            MethodInfo consumeMethod = type.GetMethod("Consume");
-            if (consumeMethod is not null)
-            {
-                Delegate consumeDelegate = Delegate
-                    .CreateDelegate(
-                        eventInfoOnMessage.EventHandlerType,
-                        consumerInstance,
-                        consumeMethod);
+            CreateDelegate(
+                consumerWrapperInstance,
+                consumerWrapperGenericType.GetEvent("OnError"),
+                consumerInstance,
+                type.GetMethod("ConsumeError"));
 
-                eventInfoOnMessage.AddEventHandler(consumerWrapperInstance, consumeDelegate);
-            }
-
-            MethodInfo consumeErrorMethod = type.GetMethod("ConsumeError");
-            if (consumeErrorMethod is not null)
-            {
-                Delegate consumeErrorDelegate = Delegate
-                    .CreateDelegate(
-                        eventInfoOnError.EventHandlerType,
-                        consumerInstance,
-                        consumeErrorMethod);
-
-                eventInfoOnError.AddEventHandler(consumerWrapperInstance, consumeErrorDelegate);
-            }
+            consumerWrapperGenericType
+                .GetMethod("ConsumerStart")?
+                .Invoke(consumerWrapperInstance, new object[] { });
 
             listConsumerWrapper.Add((IConsumerWrapper)consumerWrapperInstance);
             return consumer;
