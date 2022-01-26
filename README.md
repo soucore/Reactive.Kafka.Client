@@ -1,164 +1,76 @@
 Reactive .Net Client for Apache Kafka<sup>TM</sup>
 =========================================
 
+[![build status](https://img.shields.io/appveyor/build/RFPAlves/reactive-kafka-client/main)](https://ci.appveyor.com/project/RFPAlves/reactive-kafka-client/branch/main)
+[![test results](https://img.shields.io/appveyor/tests/RFPAlves/reactive-kafka-client/main)](https://ci.appveyor.com/project/RFPAlves/reactive-kafka-client/branch/main/tests)
+
 Features:
 
-- **Abstract** and **simplify** integrations with confluent kafka
-- Possibility to run **multi consumers** in the same application
-- Ease to run a **consumer per partition** using threads
-- Message **deserialization** to the desired object effortless
-- Specific method for the correct treatment of **error messages**
+- **Abstract** and **simplify** integrations with confluent kafka.
+- Possibility to run **multi consumers** in the same application.
+- Ease to run a **consumer per partition** using threads.
+- Message **deserialization** to the desired object effortless.
+- Specific method for the correct treatment of **error messages**.
 
-## Usage
+## Installation
+To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
-Check out our examples for a full demonstration of Reactive Kafka Consumer features.
-
-### Basic Consumer using interfaces
-
-```csharp
-/// Program.cs
-using Confluent.Kafka;
-using Reactive.Kafka.Extensions;
-using UsingInterfaces;
-
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumer(config =>
-        {
-            config.BootstrapServers = "localhost:9092";
-            config.GroupId = "YourGroup";
-            config.AutoOffsetReset = AutoOffsetReset.Earliest;
-        });
-    })
-    .Build();
-
-await host.RunAsync();
+```
+Install-Package Reactive.Kafka.Client -Version 1.0.0
 ```
 
+To add a reference to a dotnet core project, execute the following at the command line:
+
+```
+dotnet add package -v 1.0.0 Reactive.Kafka.Client
+```
+
+## Message lifecycle
+
+A message has a lifecycle that starts whenever a new message is obtained from topic. Your application can use lifecycle hook methods for the treatment or enrichment of the message.
+
+### Responding to lifecycle events
+
+Respond to events in the lifecycle of a message by overriding one or more of the lifecycle hook methods. The hooks give you the opportunity to act on a message before its use in your business logic.
+
 ```csharp
-/// Consumer1.cs
-using Confluent.Kafka;
-using Reactive.Kafka;
-using Reactive.Kafka.Errors;
-using Reactive.Kafka.Interfaces;
-
-namespace UsingInterfaces.Consumers
+public class MyConsumer : ConsumerBase<Message>
 {
-    public class Consumer1 : IKafkaConsumer<string>, IKafkaConsumerError
+    public override string OnBeforeSerialization(string rawMessage)
     {
-        private readonly ILogger<Consumer1> _logger;
-
-        // You can inject anything from DI
-        public Consumer1(ILogger<Consumer1> logger)
-            => _logger = logger;
-
-        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("topic1");
-        }
-
-        public void Consume(object sender, KafkaEventArgs<string> @event)
-        {
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
-        }
-
-        public void ConsumeError(object sender, KafkaConsumerError consumerError)
-        {
-            _logger.LogError($"[Thread: {Environment.CurrentManagedThreadId}] {consumerError.Exception.Message}");
-        }
+        // your treatment here.
+    }
+    
+    public override Message OnAfterSerialization(Message message)
+    {
+        // your enrichment here.
+    }
+    
+    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
+    {
+        // your business logic here.
+        return Task.CompletedTask;
+    }
+    
+    public override void OnConsumerBuilder(ConsumerConfig builder)
+    {
+        // your consumer configuration here.
     }
 }
 ```
 
-### Basic Consumer using abstract class
+`OnConsume` and `OnConsumerBuilder` are required. The others are not required and you implement just the ones you need.
 
-```csharp
-/// Program.cs
-using Reactive.Kafka.Extensions;
-using UsingAbstractClass;
+### Lifecycle event sequence
 
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumer("localhost:9092");
-    })
-    .Build();
+| Hook method | Purpose | Timing | Required |
+|------------------------|------------|--------|--------|
+| OnConsumerBuilder      |                            | Called once, for each consumer instance, before confluent kafka consumer.  | No  |
+| OnConsumerConfigration |                            | Called once, after confluent kafka consumer has been built.                | Yes |
+| OnBeforeSerialization  | Treatment of the message.  | Called after message consume from topic and before `OnAfterSerialization`. | No  |
+| OnAfterSerialization   | Enrichment of the message. | Called after serialization process, may not occur if serialization fails.  | No  |
+| OnConsume              | Business logic.            | Called immediately after `OnAfterSerialization` for each message.          | Yes |
+| OnConsumeError         |                            | Called when serialization process fails.                                   | No  |
 
-await host.RunAsync();
-```
-
-```csharp
-using Confluent.Kafka;
-using Reactive.Kafka;
-
-namespace UsingAbstractClass.Consumers
-{
-    public class Consumer1 : ConsumerBase<Message>
-    {
-        private readonly ILogger<Consumer1> _logger;
-
-        public Consumer1(ILogger<Consumer1> logger)
-            => _logger = logger;
-
-        public override void Consume(object sender, KafkaEventArgs<Message> @event)
-        {
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
-        }
-
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("YourTopic");
-        }
-    }
-
-    public record Message(int Id, string Name);
-}
-```
-
-### Basic Consumer Per Partition
-
-```csharp
-/// Program.cs
-using Reactive.Kafka.Extensions;
-
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerPartition<Consumer1>("localhost:9092");
-    })
-    .Build();
-
-await host.RunAsync();
-```
-
-```csharp
-/// Consumer1.cs
-using Confluent.Kafka;
-using Reactive.Kafka;
-using Reactive.Kafka.Errors;
-
-namespace ConsumerPerPartition
-{
-    public class Consumer1 : ConsumerBase<string>
-    {
-        private readonly ILogger _logger;
-
-        public Consumer1(ILogger<Consumer1> logger)
-            => _logger = logger;
-
-        public override void Consume(object sender, KafkaEventArgs<string> @event)
-        {
-            _logger.LogInformation($"[Thread: {Environment.CurrentManagedThreadId}] {@event.Message}");
-        }
-
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("your-topic");
-        }
-    }
-}
-```
+## Concept
+![Concept Image](docs/concept.png)
