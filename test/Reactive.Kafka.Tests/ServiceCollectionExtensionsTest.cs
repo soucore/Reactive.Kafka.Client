@@ -16,18 +16,22 @@ namespace Reactive.Kafka.Tests
             IServiceCollection services = new ServiceCollection();
 
             // Act
-            async Task servicesParamIsNull()
+            Task servicesParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumerPerPartition<Consumer1>(
                         null, "localhost:9092");
+
+                return Task.CompletedTask;
             }
 
-            async Task bootstrapParamIsNull()
+            Task bootstrapParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumerPerPartition<Consumer1>(
                         services, null);
+
+                return Task.CompletedTask;
             }
 
             // Assert
@@ -42,18 +46,22 @@ namespace Reactive.Kafka.Tests
             IServiceCollection services = new ServiceCollection();
 
             // Act
-            async Task servicesParamIsNull()
+            Task servicesParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumerPerQuantity<Consumer1>(
                         null, "localhost:9092", quantity: 0);
+
+                return Task.CompletedTask;
             }
 
-            async Task bootstrapParamIsNull()
+            Task bootstrapParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumerPerQuantity<Consumer1>(
                         services, null, quantity: 0);
+
+                return Task.CompletedTask;
             }
 
             // Assert
@@ -68,25 +76,31 @@ namespace Reactive.Kafka.Tests
             IServiceCollection services = new ServiceCollection();
 
             // Act
-            async Task servicesParamIsNull()
+            Task servicesParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
                         null, "localhost:9092", groupId: null);
+
+                return Task.CompletedTask;
             }
 
-            async Task bootstrapParamIsNull()
+            Task bootstrapParamIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
                         services, null, groupId: null);
+
+                return Task.CompletedTask;
             }
 
-            async Task setupActionIsNull()
+            Task setupActionIsNull()
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
                         services, null, assembly: null);
+
+                return Task.CompletedTask;
             }
 
             // Assert

@@ -10,7 +10,7 @@ namespace UsingAbstractClass.Consumers
         public Consumer1(ILogger<Consumer1> logger)
             => _logger = logger;
 
-        public override Task Consume(ConsumerMessage<Message> consumerMessage, Commit commit)
+        public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
         {
             _logger.LogInformation("Message ==> {Message}", consumerMessage.Message);
 

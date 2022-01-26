@@ -11,7 +11,7 @@ namespace UsingInterfaces.Consumers
         public Consumer2(ILogger<Consumer2> logger)
             => _logger = logger;
 
-        public Task Consume(ConsumerMessage<string> consumerMessage, Commit commit)
+        public Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
         {
             _logger.LogInformation("Message ==> {Message}", consumerMessage.Message);
             

@@ -218,15 +218,15 @@ namespace Reactive.Kafka.Extensions
 
             CreateDelegate(
                 consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnMessage"),
+                consumerWrapperGenericType.GetEvent("OnConsume"),
                 consumerInstance,
-                type.GetMethod("Consume"));
+                type.GetMethod("OnConsume"));
 
             CreateDelegate(
                 consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnError"),
+                consumerWrapperGenericType.GetEvent("OnConsumeError"),
                 consumerInstance,
-                type.GetMethod("ConsumeError"));
+                type.GetMethod("OnConsumeError"));
 
             consumerWrapperGenericType
                 .GetMethod("ConsumerStart")?

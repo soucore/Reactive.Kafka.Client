@@ -71,8 +71,8 @@ public class KafkaConsumerErrorTest
     public void ParamExceptionIsNull()
     {
         // Arrange
-        Exception? value = null;
-        string? expected = null;
+        Exception value = null;
+        string expected = null;
         
         // Act
         var consumerError = new KafkaConsumerError(value);

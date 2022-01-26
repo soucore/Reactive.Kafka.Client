@@ -102,7 +102,7 @@ namespace Reactive.Kafka.Tests
         [Theory]
         [InlineData(@"{""Id"":1,""Name"":""John""}", 1, "John")]
         [InlineData(@"{""Id"":2,""Name"":""Rafael""}", 2, "Rafael")]
-        public async Task OnMessageEvent(string rawMessage, int expectedId, string expectedName)
+        public async Task OnConsumeEvent(string rawMessage, int expectedId, string expectedName)
         {
             // Arrange
             var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
@@ -112,7 +112,7 @@ namespace Reactive.Kafka.Tests
             string name = null;
 
             // Act
-            consumerWrapper.OnMessage +=
+            consumerWrapper.OnConsume +=
                 (consumerMessage, commit) =>
                 {
                     id = consumerMessage.Message.Id;

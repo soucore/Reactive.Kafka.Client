@@ -20,8 +20,8 @@ namespace Reactive.Kafka
         #region Events
         public event Func<string, string> OnBeforeSerialization;
         public event Func<T, T> OnAfterSerialization;
-        public event EventHandlerAsync<ConsumerMessage<T>> OnMessage;
-        public event EventHandlerAsync<KafkaConsumerError> OnError;
+        public event EventHandlerAsync<ConsumerMessage<T>> OnConsume;
+        public event EventHandlerAsync<KafkaConsumerError> OnConsumeError;
         #endregion
 
         private readonly ILogger _logger;
@@ -58,7 +58,7 @@ namespace Reactive.Kafka
                     }
                     catch (KafkaConsumerException ex)
                     {
-                        if (OnError is not null)
+                        if (OnConsumeError is not null)
                             continue;
 
                         _ = HandleException(ex);
@@ -100,7 +100,7 @@ namespace Reactive.Kafka
 
         public async Task HandleException(Exception exception)
         {
-            await OnError.Invoke(new KafkaConsumerError(exception), Consumer.Commit);
+            await OnConsumeError.Invoke(new KafkaConsumerError(exception), Consumer.Commit);
         }
 
         #region Non-Public Methods
@@ -109,8 +109,8 @@ namespace Reactive.Kafka
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
 
-            if (OnMessage is not null)
-                await OnMessage.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
+            if (OnConsume is not null)
+                await OnConsume.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
         }
 
         private void UnsuccessfulConversion(Message<string, string> kafkaMessage)

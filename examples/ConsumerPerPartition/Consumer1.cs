@@ -5,7 +5,7 @@ namespace ConsumerPerPartition
 {
     internal class Consumer1 : ConsumerBase<Message>
     {
-        public override Task Consume(ConsumerMessage<Message> consumerMessage, Commit commit)
+        public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
         {
             return Task.CompletedTask;
         }

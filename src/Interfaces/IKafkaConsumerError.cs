@@ -12,6 +12,6 @@ namespace Reactive.Kafka.Interfaces
         /// <param name="consumerError">Object containing error information</param>
         /// <param name="commit">Offset commit function</param>
         /// <returns></returns>
-        Task ConsumeError(KafkaConsumerError consumerError, Commit commit);
+        Task OnConsumeError(KafkaConsumerError consumerError, Commit commit);
     }
 }

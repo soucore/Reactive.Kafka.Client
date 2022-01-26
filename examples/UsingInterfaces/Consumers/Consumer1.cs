@@ -12,14 +12,14 @@ namespace UsingInterfaces.Consumers
         public Consumer1(ILogger<Consumer1> logger)
             => _logger = logger;
 
-        public Task Consume(ConsumerMessage<string> consumerMessage, Commit commit)
+        public Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
         {
             _logger.LogInformation("Message ==> {Message}", consumerMessage.Message);
             
             return Task.CompletedTask;
         }
 
-        public Task ConsumeError(KafkaConsumerError consumerError, Commit commit)
+        public Task OnConsumeError(KafkaConsumerError consumerError, Commit commit)
         {
             _logger.LogError("Message with error ==> {Message}", consumerError.KafkaMessage);
 

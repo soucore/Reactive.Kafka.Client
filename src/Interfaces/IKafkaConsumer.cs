@@ -11,7 +11,7 @@ namespace Reactive.Kafka.Interfaces
         /// <param name="kafkaMessage">Kafka message containing key and value</param>
         /// <param name="commit">Offset commit function</param>
         /// <returns></returns>
-        Task Consume(ConsumerMessage<T> consumerMessage, Commit commit);
+        Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);
 
         /// <summary>
         /// Consumer configuration.
