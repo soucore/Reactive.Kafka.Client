@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Interfaces
 {
-    public interface IKafkaConsumer<T>
+    public interface IKafkaConsumer<T> : IKafkaConsumer
     {
         /// <summary>
         /// Entry point for each kafka message received.
@@ -19,4 +19,6 @@ namespace Reactive.Kafka.Interfaces
         /// <param name="consumer">Consumer instance</param>
         void OnConsumerConfiguration(IConsumer<string, string> consumer);
     }
+
+    public interface IKafkaConsumer { }
 }

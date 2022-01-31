@@ -4,7 +4,15 @@
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.14</Version>
+    <Version>1.0.0</Version>
+    <Authors>SouCore Community</Authors>
+    <Product>Reactive Kafka Client</Product>
+    <Description>Abstract and simplify integrations with confluent kafka</Description>
+    <PackageProjectUrl>https://github.com/soucore/Reactive.Kafka.Client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/soucore/Reactive.Kafka.Client</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <AssemblyName>Reactive.Kafka.Client</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -14,6 +22,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="1.8.2" />

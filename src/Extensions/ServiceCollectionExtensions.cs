@@ -15,6 +15,7 @@ namespace Reactive.Kafka.Extensions
         private static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
 
         public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string groupId = default)
+            where T : IKafkaConsumer
         {
             if (services is null)
             {
@@ -45,6 +46,7 @@ namespace Reactive.Kafka.Extensions
         }
 
         public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, string bootstrapServer, int quantity, string groupId = default)
+            where T : IKafkaConsumer
         {
             if (services is null)
             {
@@ -230,7 +232,7 @@ namespace Reactive.Kafka.Extensions
 
             consumerWrapperGenericType
                 .GetMethod("ConsumerStart")?
-                .Invoke(consumerWrapperInstance, new object[] { });
+                .Invoke(consumerWrapperInstance, Array.Empty<object>());
 
             listConsumerWrapper.Add((IConsumerWrapper)consumerWrapperInstance);
             return consumer;
