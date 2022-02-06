@@ -230,6 +230,31 @@ namespace Reactive.Kafka.Extensions
                 consumerInstance,
                 type.GetMethod("OnConsumeError"));
 
+            #region Producer Settings
+            var producerConfig = new ProducerConfig();
+
+            type.GetMethod("OnProducerBuilder")?
+                .Invoke(consumerInstance, new object[] { producerConfig });
+
+            var producerBuilder = new ProducerBuilder<string, string>(producerConfig);
+            var producer = producerBuilder.Build();
+
+            object producerWrapperInstance = ActivatorUtilities
+                .CreateInstance(provider, typeof(ProducerWrapper), new object[] { producer });
+
+            CreateDelegate(
+                consumerInstance,
+                type.GetEvent("OnProduce"),
+                producerWrapperInstance,
+                producerWrapperInstance.GetType().GetMethod("OnProduce"));
+
+            CreateDelegate(
+                consumerInstance,
+                type.GetEvent("OnProduceAsync"),
+                producerWrapperInstance,
+                producerWrapperInstance.GetType().GetMethod("OnProduceAsync"));
+            #endregion
+
             consumerWrapperGenericType
                 .GetMethod("ConsumerStart")?
                 .Invoke(consumerWrapperInstance, Array.Empty<object>());
