@@ -1,11 +1,10 @@
-﻿using Xunit;
-using Reactive.Kafka;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
+using Reactive.Kafka.Exceptions;
+using Reactive.Kafka.Tests.Types;
 using System;
 using System.Threading.Tasks;
-using Reactive.Kafka.Tests.Types;
-using Reactive.Kafka.Exceptions;
+using Xunit;
 
 namespace Reactive.Kafka.Tests
 {
@@ -23,7 +22,7 @@ namespace Reactive.Kafka.Tests
         [Theory]
         [InlineData("Reactive", "[ Reactive ]")]
         [InlineData("Consumer", "[ Consumer ]")]
-        public async Task OnBeforeSerializationEvent(string rawMessage, string expectedMessage)
+        public void OnBeforeSerializationEvent(string rawMessage, string expectedMessage)
         {
             // Arrange
             var consumerWrapper = new ConsumerWrapper<string>(_loggerFactory, _consumer);
@@ -38,7 +37,7 @@ namespace Reactive.Kafka.Tests
                     return beforeSerialization;
                 };
 
-            await consumerWrapper.ConvertMessage(kafkaMessage);
+            consumerWrapper.ConvertMessage(kafkaMessage);
 
             // Assert
             Assert.NotEmpty(beforeSerialization);
@@ -46,7 +45,7 @@ namespace Reactive.Kafka.Tests
         }
 
         [Fact]
-        public async Task OnAfterSerializationEvent()
+        public void OnAfterSerializationEvent()
         {
             // Arrange
             var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
@@ -64,7 +63,7 @@ namespace Reactive.Kafka.Tests
                     return afterSerialization;
                 };
 
-            await consumerWrapper.ConvertMessage(kafkaMessage);
+            consumerWrapper.ConvertMessage(kafkaMessage);
 
             // Assert
             Assert.Equal(expectedMessage.Id, afterSerialization.Id);
@@ -79,7 +78,11 @@ namespace Reactive.Kafka.Tests
             var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
             // Act
-            async Task action() => await consumerWrapper.ConvertMessage(kafkaMessage);
+            Task action()
+            {
+                consumerWrapper.ConvertMessage(kafkaMessage);
+                return Task.CompletedTask;
+            }
 
             // Assert
             await Assert.ThrowsAsync<KafkaConsumerException>(action);
@@ -93,7 +96,11 @@ namespace Reactive.Kafka.Tests
             var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
             // Act
-            async Task action() => await consumerWrapper.ConvertMessage(kafkaMessage);
+            Task action()
+            {
+                consumerWrapper.ConvertMessage(kafkaMessage);
+                return Task.CompletedTask;
+            }
 
             // Assert
             await Assert.ThrowsAsync<KafkaConsumerException>(action);
@@ -102,7 +109,7 @@ namespace Reactive.Kafka.Tests
         [Theory]
         [InlineData(@"{""Id"":1,""Name"":""John""}", 1, "John")]
         [InlineData(@"{""Id"":2,""Name"":""Rafael""}", 2, "Rafael")]
-        public async Task OnConsumeEvent(string rawMessage, int expectedId, string expectedName)
+        public void OnConsumeEvent(string rawMessage, int expectedId, string expectedName)
         {
             // Arrange
             var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
@@ -121,7 +128,7 @@ namespace Reactive.Kafka.Tests
                     return Task.CompletedTask;
                 };
 
-            await consumerWrapper.ConvertMessage(kafkaMessage);
+            consumerWrapper.ConvertMessage(kafkaMessage);
 
             // Assert
             Assert.NotNull(id);
