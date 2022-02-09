@@ -54,11 +54,11 @@ namespace Reactive.Kafka
                         if (_logger.IsEnabled(LogLevel.Debug))
                             _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
 
-                        _ = ConvertMessage(result.Message);
+                        ConvertMessage(result.Message);
                     }
                     catch (KafkaConsumerException ex)
                     {
-                        if (OnConsumeError is not null)
+                        if (OnConsumeError is null)
                             continue;
 
                         _ = HandleException(ex);
@@ -79,7 +79,7 @@ namespace Reactive.Kafka
             }, TaskCreationOptions.LongRunning);
         }
 
-        public async Task ConvertMessage(Message<string, string> kafkaMessage)
+        public void ConvertMessage(Message<string, string> kafkaMessage)
         {
             if (OnBeforeSerialization is not null)
                 kafkaMessage.Value = OnBeforeSerialization.Invoke(kafkaMessage.Value);
@@ -90,7 +90,7 @@ namespace Reactive.Kafka
                 if (OnAfterSerialization is not null)
                     message = OnAfterSerialization.Invoke(message);
 
-                await SuccessfulConversion(message, kafkaMessage);
+                _ = SuccessfulConversion(message, kafkaMessage);
             }
             else
             {
