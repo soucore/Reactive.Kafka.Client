@@ -11,8 +11,8 @@ namespace Reactive.Kafka.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        private static readonly IDictionary<string, int> partitionsDict = new Dictionary<string, int>();
-        private static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
+        public static readonly IDictionary<string, int> partitionsDict = new Dictionary<string, int>();
+        public static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
 
         public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string groupId = default)
             where T : IKafkaConsumer
@@ -120,20 +120,19 @@ namespace Reactive.Kafka.Extensions
             return services;
         }
 
-        #region Non-Public Methods        
         /// <summary>
         /// Creates consumers from the given assembly.
         /// </summary>
         /// <param name="provider">Dependency injection service provider</param>
         /// <param name="assembly">Assembly from which search will be done</param>
-        private static void ApplyConsumersFromAssembly(IServiceProvider provider, Assembly assembly)
+        public static void ApplyConsumersFromAssembly(IServiceProvider provider, Assembly assembly, bool test = false)
         {
             IEnumerable<Type> types = assembly
                 .GetTypes()
                 .Where(type => type.GetInterface(typeof(IKafkaConsumer<>).Name, true) is not null);
 
             foreach (Type type in types)
-                ApplyReflection(provider, type);
+                ApplyReflection(provider, type, test);
         }
 
         /// <summary>
@@ -141,14 +140,14 @@ namespace Reactive.Kafka.Extensions
         /// </summary>
         /// <param name="provider">Dependency injection service provider</param>
         /// <param name="consumerType">Consumer type object</param>
-        private static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType)
+        public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, bool test = false)
         {
             int? partitions = null;
             int consumers = 0;
 
             do
             {
-                IConsumer<string, string> consumer = ApplyReflection(provider, consumerType);
+                IConsumer<string, string> consumer = ApplyReflection(provider, consumerType, test);
 
                 if (!partitions.HasValue && consumer is not null)
                 {
@@ -168,13 +167,13 @@ namespace Reactive.Kafka.Extensions
         /// <param name="provider">Dependency injection service provider</param>
         /// <param name="consumerType">Consumer type object</param>
         /// <param name="quantity">Quantity of consumers</param>
-        private static void ApplyConsumerPerQuantity(IServiceProvider provider, Type consumerType, int quantity)
+        public static void ApplyConsumerPerQuantity(IServiceProvider provider, Type consumerType, int quantity, bool test = false)
         {
             for (int i = 0; i < quantity; i++)
-                ApplyReflection(provider, consumerType);
+                ApplyReflection(provider, consumerType, test);
         }
 
-        private static IConsumer<string, string> ApplyReflection(IServiceProvider provider, Type type)
+        public static IConsumer<string, string> ApplyReflection(IServiceProvider provider, Type type, bool test = false)
         {
             Type genericTypeArgumentMessage = type
                 .GetInterface(typeof(IKafkaConsumer<>).Name, true)?
@@ -255,21 +254,27 @@ namespace Reactive.Kafka.Extensions
                 producerWrapperInstance.GetType().GetMethod("OnProduceAsync"));
             #endregion
 
-            consumerWrapperGenericType
-                .GetMethod("ConsumerStart")?
-                .Invoke(consumerWrapperInstance, Array.Empty<object>());
+            if (!test)
+            {
+                consumerWrapperGenericType
+                    .GetMethod("ConsumerStart")?
+                    .Invoke(consumerWrapperInstance, Array.Empty<object>());
+            }
 
             listConsumerWrapper.Add((IConsumerWrapper)consumerWrapperInstance);
             return consumer;
         }
 
-        private static void PartitionsDiscovery(string bootstrapServer)
+        public static void PartitionsDiscovery(string bootstrapServer)
         {
             using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServer }).Build();
+            Metadata meta = adminClient.GetMetadata(TimeSpan.FromSeconds(20));
 
-            Metadata meta = null;
+            FillPartitionsDict(meta);
+        }
 
-            meta = adminClient.GetMetadata(TimeSpan.FromSeconds(20));
+        public static void FillPartitionsDict(Metadata meta)
+        {
             meta.Topics.ForEach(topicMetada =>
             {
                 if (partitionsDict.ContainsKey(topicMetada.Topic))
@@ -278,6 +283,5 @@ namespace Reactive.Kafka.Extensions
                     partitionsDict.Add(topicMetada.Topic, topicMetada.Partitions.Count);
             });
         }
-        #endregion
     }
 }
