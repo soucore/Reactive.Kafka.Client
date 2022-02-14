@@ -64,14 +64,15 @@ public class MyConsumer : ConsumerBase<Message>
 
 ### Lifecycle event sequence
 
-| Hook method             | Purpose                    | Timing                                                                                  | Required |
-|-------------------------|----------------------------|-----------------------------------------------------------------------------------------|----------|
-| OnConsumerBuilder       |                            | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
-| OnConsumerConfiguration |                            | Called once, for each consumer instance, after confluent kafka consumer has been built. | Yes      |
-| OnBeforeSerialization   | Treatment of the message.  | Called after message consume from topic and before `OnAfterSerialization`.              | No       |
-| OnAfterSerialization    | Enrichment of the message. | Called after serialization process, may not occur if serialization fails.               | No       |
-| OnConsume               | Business logic.            | Called immediately after `OnAfterSerialization` for each message.                       | Yes      |
-| OnConsumeError          |                            | Called when serialization process fails.                                                | No       |
+| Hook method             | Purpose                                   | Timing                                                                                  | Required |
+|-------------------------|-------------------------------------------|-----------------------------------------------------------------------------------------|----------|
+| OnConsumerBuilder       |                                           | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
+| OnProducerBuilder       | Producer instance for message forwarding. | Called once, for each consumer instance, before confluent kafka producer built.         | No       |
+| OnConsumerConfiguration |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | Yes      |
+| OnBeforeSerialization   | Treatment of the message.                 | Called after message consume from topic and before `OnAfterSerialization`.              | No       |
+| OnAfterSerialization    | Enrichment of the message.                | Called after serialization process, may not occur if serialization fails.               | No       |
+| OnConsume               | Business logic.                           | Called immediately after `OnAfterSerialization` for each message.                       | Yes      |
+| OnConsumeError          |                                           | Called when serialization process fails.                                                | No       |
 
 ## Concept
 ![Concept Image](docs/concept.png)
@@ -100,15 +101,25 @@ public class Message
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<Message>
 {
+    public override void OnProducerBuilder(ProducerConfig builder)
+    {
+        builder.BootstrapServers = "localhost:9092";
+        builder.Acks = Acks.None;
+    }
+
     public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
     {
         consumer.Subscribe("your-topic");
     }
 
-    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
-    {
+    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
+    {       
+        if (consumerMessage.Id == 0) {
+            await ProducerAsync("DeadLetterTopic", consumerMessage.Message);
+            return;
+        }
+        
         Console.WriteLine(consumerMessage.Message);
-        return Task.CompletedTask;
     }
 }
 ```
@@ -238,5 +249,4 @@ await host.RunAsync();
 
 ## Future features
 
-- Coupled producer in each consumer for dead letter purposes.
 - Consumer healthcheck as a ASP.NET plugin.
