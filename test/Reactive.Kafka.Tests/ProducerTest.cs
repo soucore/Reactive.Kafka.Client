@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Reactive.Kafka.Tests
@@ -24,6 +25,47 @@ namespace Reactive.Kafka.Tests
             // Assert
             Assert.NotNull(producerWrapper.Producer);
             Assert.IsAssignableFrom<IProducer<string, string>>(producerWrapper.Producer);
+        }
+
+        [Fact]
+        public void EnsureOnProduceMethodCalledOnce()
+        {
+            // Arrange
+            var mock = new Mock<IProducer<string, string>>();
+            var message = new Message<string, string>() { Value = "test message." };
+
+            mock.Setup(x => x.Produce("topic1", message, null));
+
+            var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
+
+            // Act
+            producerWrapper.OnProduce("topic1", message);
+
+            // Assert
+            mock.Verify(x => x.Produce("topic1", message, null), Times.Once());
+        }
+
+        [Fact]
+        public async Task EnsureOnProduceAsyncMethodCalledOnce()
+        {
+            // Arrange
+            var mock = new Mock<IProducer<string, string>>();
+            
+            var message = new Message<string, string>() { Value = "test message." };
+            var result = new DeliveryResult<string, string>();
+
+            mock.Setup(x => x.ProduceAsync("topic1", message, default).Result)
+                .Returns(result);
+
+            var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
+
+            // Act
+            var dr = await producerWrapper.OnProduceAsync("topic1", message);
+
+            // Assert
+            Assert.Equal(result, dr);
+
+            mock.Verify(x => x.ProduceAsync("topic1", message, default), Times.Once());
         }
     }
 }
