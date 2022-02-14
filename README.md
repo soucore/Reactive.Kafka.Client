@@ -17,13 +17,13 @@ Features:
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
 ```
-Install-Package Reactive.Kafka.Client -Version 1.0.0
+Install-Package Reactive.Kafka.Client -Version 1.1.0
 ```
 
 To add a reference to a dotnet core project, execute the following at the command line:
 
 ```
-dotnet add package -v 1.0.0 Reactive.Kafka.Client
+dotnet add package -v 1.1.0 Reactive.Kafka.Client
 ```
 
 ## Message lifecycle
