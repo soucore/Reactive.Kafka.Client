@@ -104,7 +104,7 @@ namespace Reactive.Kafka
         }
 
         #region Non-Public Methods
-        private async Task SuccessfulConversion(T message, Message<string, string> kafkaMessage)
+        public async Task SuccessfulConversion(T message, Message<string, string> kafkaMessage)
         {
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
@@ -113,7 +113,7 @@ namespace Reactive.Kafka
                 await OnConsume.Invoke(new ConsumerMessage<T>(kafkaMessage.Key, message), Consumer.Commit)!;
         }
 
-        private void UnsuccessfulConversion(Message<string, string> kafkaMessage)
+        public void UnsuccessfulConversion(Message<string, string> kafkaMessage)
         {
             if (_logger.IsEnabled(LogLevel.Debug))
                 _logger.LogDebug("Unable convert message to '{TypeName}'", typeof(T).Name);
