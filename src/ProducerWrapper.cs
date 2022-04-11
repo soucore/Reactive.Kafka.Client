@@ -1,8 +1,4 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-
-namespace Reactive.Kafka
+﻿namespace Reactive.Kafka
 {
     public sealed class ProducerWrapper
     {

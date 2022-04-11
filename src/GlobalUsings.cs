@@ -1,0 +1,9 @@
+﻿global using Confluent.Kafka;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Reactive.Kafka.Configurations;
+global using Reactive.Kafka.Errors;
+global using Reactive.Kafka.Exceptions;
+global using Reactive.Kafka.Interfaces;
+global using System.Reflection;

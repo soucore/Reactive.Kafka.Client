@@ -1,5 +1,4 @@
-﻿using Confluent.Kafka;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Tests.Types
 {

@@ -1,6 +1,4 @@
-﻿using Confluent.Kafka;
-
-namespace Reactive.Kafka.Interfaces
+﻿namespace Reactive.Kafka.Interfaces
 {
     public interface IKafkaConsumerBuilder
     {

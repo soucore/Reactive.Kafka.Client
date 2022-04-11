@@ -30,5 +30,15 @@ namespace Reactive.Kafka.Tests.Types
 
             base.OnProducerBuilder(builder);
         }
+
+        public override string OnAfterSerialization(string message)
+        {
+            return base.OnAfterSerialization(message);
+        }
+
+        public override string OnBeforeSerialization(string rawMessage)
+        {
+            return base.OnBeforeSerialization(rawMessage);
+        }
     }
 }

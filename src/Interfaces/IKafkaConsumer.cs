@@ -1,7 +1,4 @@
-﻿using Confluent.Kafka;
-using System.Threading.Tasks;
-
-namespace Reactive.Kafka.Interfaces
+﻿namespace Reactive.Kafka.Interfaces
 {
     public interface IKafkaConsumer<T> : IKafkaConsumer
     {
