@@ -77,6 +77,49 @@ public class MyConsumer : ConsumerBase<Message>
 ## Concept
 ![Concept Image](docs/concept.png)
 
+## Health Check
+
+Health checks are a way to check the health of consumers based on the time that has elapsed since the last message consumed. Without any health checks specified, the application has no way of knowing whether consumers are actually active or not.
+
+```csharp
+// Program.cs
+using Reactive.Kafka.Extensions;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+        
+        services
+            .AddReactiveKafkaConsumerPerPartition<ConsumerExample>("localhost:9092")
+            .AddReactiveKafkaHealthCheck(config => {
+                // interval between checks
+                config.IntervalSeconds = 10;
+                
+                // time for a consumer to be considered unhealthy
+                config.ReferenceTimeMinutes = 10;
+                
+                // number of unreachable consumers to be considered unhealthy (negative numbers for all) 
+                config.NumberOfObservedConsumers = 1; 
+            });
+    })
+    .Build();
+
+await host.RunAsync();
+```
+
+A file will be created in the project root called `healthy.txt` or `unhealthy.txt`. This way, in kubernetes environments you can leverage to provide liveness probes to detect and remedy fail situations.
+
+```yaml
+livenessProbe:
+  exec:
+    command:
+    - cat
+    - healthy.txt
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
 ## Usage
 
 - Exclusive thread per consumer.
@@ -246,7 +289,3 @@ IHost host = Host.CreateDefaultBuilder(args)
 
 await host.RunAsync();
 ```
-
-## Future features
-
-- Consumer healthcheck as a ASP.NET plugin.
