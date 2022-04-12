@@ -1,31 +1,14 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.DependencyInjection;
-using Reactive.Kafka.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using static Reactive.Kafka.Helpers.Reflection;
-
-namespace Reactive.Kafka.Extensions
+﻿namespace Reactive.Kafka.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static readonly IDictionary<string, int> partitionsDict = new Dictionary<string, int>();
         public static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
 
         public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string groupId = default)
             where T : IKafkaConsumer
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (bootstrapServer is null)
-            {
-                throw new ArgumentNullException(nameof(bootstrapServer));
-            }
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(bootstrapServer);
 
             groupId ??= Guid.NewGuid().ToString();
 
@@ -39,24 +22,15 @@ namespace Reactive.Kafka.Extensions
                 };
             });
 
-            PartitionsDiscovery(bootstrapServer);
-            ApplyConsumerPerPartition(services.BuildServiceProvider(), typeof(T));
-
+            ApplyConsumerPerPartition(services.BuildServiceProvider(), typeof(T), bootstrapServer);
             return services;
         }
 
         public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, string bootstrapServer, int quantity, string groupId = default)
             where T : IKafkaConsumer
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (bootstrapServer is null)
-            {
-                throw new ArgumentNullException(nameof(bootstrapServer));
-            }
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(bootstrapServer);
 
             groupId ??= Guid.NewGuid().ToString();
 
@@ -71,21 +45,13 @@ namespace Reactive.Kafka.Extensions
             });
 
             ApplyConsumerPerQuantity(services.BuildServiceProvider(), typeof(T), quantity);
-
             return services;
         }
 
         public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, string groupId = default)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (bootstrapServer is null)
-            {
-                throw new ArgumentNullException(nameof(bootstrapServer));
-            }
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(bootstrapServer);
 
             groupId ??= Guid.NewGuid().ToString();
 
@@ -98,10 +64,7 @@ namespace Reactive.Kafka.Extensions
 
         public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, Action<ConsumerConfig> setupAction, Assembly assembly = default)
         {
-            if (setupAction is null)
-            {
-                throw new ArgumentNullException(nameof(setupAction));
-            }
+            ArgumentNullException.ThrowIfNull(setupAction);
 
             services.AddSingleton(listConsumerWrapper);
             services.AddTransient(provider =>
@@ -120,34 +83,46 @@ namespace Reactive.Kafka.Extensions
             return services;
         }
 
-        /// <summary>
-        /// Creates consumers from the given assembly.
-        /// </summary>
-        /// <param name="provider">Dependency injection service provider</param>
-        /// <param name="assembly">Assembly from which search will be done</param>
+        public static IServiceCollection AddReactiveKafkaHealthCheck(this IServiceCollection services, Action<KafkaHealthCheckConfiguration> setupAction = null)
+        {
+            IServiceProvider provider = services.BuildServiceProvider();
+
+            var config = (KafkaHealthCheckConfiguration)ActivatorUtilities
+                .CreateInstance(provider, typeof(KafkaHealthCheckConfiguration));
+
+            setupAction?.Invoke(config);
+
+            KafkaHealthCheck
+                .CreateInstance(provider, config, autoStart: true);
+
+            return services;
+        }
+
         public static void ApplyConsumersFromAssembly(IServiceProvider provider, Assembly assembly, bool test = false)
         {
             IEnumerable<Type> types = assembly
                 .GetTypes()
                 .Where(type => type.GetInterface(typeof(IKafkaConsumer<>).Name, true) is not null);
 
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, null, test);
+
             foreach (Type type in types)
-                ApplyReflection(provider, type, test);
+                kafkaReflection.Build(alternativeType: type);
         }
 
-        /// <summary>
-        /// Creates a consumer per partition of specified topic.
-        /// </summary>
-        /// <param name="provider">Dependency injection service provider</param>
-        /// <param name="consumerType">Consumer type object</param>
-        public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, bool test = false)
+        public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, string bootstrapServer, bool test = false)
         {
             int? partitions = null;
-            int consumers = 0;
+            int? consumers = 0;
+
+            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, bootstrapServer, test);
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerType, test);
+
+            Dictionary<string, int> partitionsDict = kafkaAdmin.PartitionsDiscovery();
 
             do
             {
-                IConsumer<string, string> consumer = ApplyReflection(provider, consumerType, test);
+                var (consumer, _) = kafkaReflection.Build();
 
                 if (!partitions.HasValue && consumer is not null)
                 {
@@ -155,133 +130,18 @@ namespace Reactive.Kafka.Extensions
 
                     partitions = partitionsDict.ContainsKey(topic)
                         ? partitionsDict[topic]
-                        : default(int);
+                        : default;
                 }
             }
             while (++consumers < partitions);
         }
 
-        /// <summary>
-        /// Creates consumers from given quantity.
-        /// </summary>
-        /// <param name="provider">Dependency injection service provider</param>
-        /// <param name="consumerType">Consumer type object</param>
-        /// <param name="quantity">Quantity of consumers</param>
         public static void ApplyConsumerPerQuantity(IServiceProvider provider, Type consumerType, int quantity, bool test = false)
         {
-            for (int i = 0; i < quantity; i++)
-                ApplyReflection(provider, consumerType, test);
-        }
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerType, test);
 
-        public static IConsumer<string, string> ApplyReflection(IServiceProvider provider, Type type, bool test = false)
-        {
-            Type genericTypeArgumentMessage = type
-                .GetInterface(typeof(IKafkaConsumer<>).Name, true)?
-                .GenericTypeArguments[0];
-
-            if (genericTypeArgumentMessage is null) return default;
-
-            Type consumerWrapperGenericType = typeof(ConsumerWrapper<>)
-                .MakeGenericType(genericTypeArgumentMessage);
-
-            var config = provider.GetRequiredService<ConsumerConfig>();
-
-            object consumerInstance = ActivatorUtilities
-                .CreateInstance(provider, type);
-
-            type.GetMethod("OnConsumerBuilder")?
-                .Invoke(consumerInstance, new object[] { config });
-
-            var builder = new ConsumerBuilder<string, string>(config);
-            var consumer = builder.Build();
-
-            type.GetMethod("OnConsumerConfiguration")?
-                .Invoke(consumerInstance, new object[] { consumer });
-
-            if (!consumer.Subscription.Any()) return default;
-
-            object consumerWrapperInstance = ActivatorUtilities
-                .CreateInstance(provider, consumerWrapperGenericType, new object[] { consumer });
-
-            #region Message Lifecycle
-            CreateDelegate(
-                consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnBeforeSerialization"),
-                consumerInstance,
-                type.GetMethod("OnBeforeSerialization"));
-
-            CreateDelegate(
-                consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnAfterSerialization"),
-                consumerInstance,
-                type.GetMethod("OnAfterSerialization"));
-            #endregion
-
-            CreateDelegate(
-                consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnConsume"),
-                consumerInstance,
-                type.GetMethod("OnConsume"));
-
-            CreateDelegate(
-                consumerWrapperInstance,
-                consumerWrapperGenericType.GetEvent("OnConsumeError"),
-                consumerInstance,
-                type.GetMethod("OnConsumeError"));
-
-            #region Producer Settings
-            var producerConfig = new ProducerConfig();
-
-            type.GetMethod("OnProducerBuilder")?
-                .Invoke(consumerInstance, new object[] { producerConfig });
-
-            var producerBuilder = new ProducerBuilder<string, string>(producerConfig);
-            var producer = producerBuilder.Build();
-
-            object producerWrapperInstance = ActivatorUtilities
-                .CreateInstance(provider, typeof(ProducerWrapper), new object[] { producer });
-
-            CreateDelegate(
-                consumerInstance,
-                type.GetEvent("OnProduce"),
-                producerWrapperInstance,
-                producerWrapperInstance.GetType().GetMethod("OnProduce"));
-
-            CreateDelegate(
-                consumerInstance,
-                type.GetEvent("OnProduceAsync"),
-                producerWrapperInstance,
-                producerWrapperInstance.GetType().GetMethod("OnProduceAsync"));
-            #endregion
-
-            if (!test)
-            {
-                consumerWrapperGenericType
-                    .GetMethod("ConsumerStart")?
-                    .Invoke(consumerWrapperInstance, Array.Empty<object>());
-            }
-
-            listConsumerWrapper.Add((IConsumerWrapper)consumerWrapperInstance);
-            return consumer;
-        }
-
-        public static void PartitionsDiscovery(string bootstrapServer)
-        {
-            using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServer }).Build();
-            Metadata meta = adminClient.GetMetadata(TimeSpan.FromSeconds(20));
-
-            FillPartitionsDict(meta);
-        }
-
-        public static void FillPartitionsDict(Metadata meta)
-        {
-            meta.Topics.ForEach(topicMetada =>
-            {
-                if (partitionsDict.ContainsKey(topicMetada.Topic))
-                    partitionsDict[topicMetada.Topic] = topicMetada.Partitions.Count;
-                else
-                    partitionsDict.Add(topicMetada.Topic, topicMetada.Partitions.Count);
-            });
+            foreach (int _ in Enumerable.Range(0, quantity))
+                kafkaReflection.Build();
         }
     }
 }

@@ -1,10 +1,4 @@
-﻿using Confluent.Kafka;
-using Reactive.Kafka.Errors;
-using Reactive.Kafka.Interfaces;
-using System;
-using System.Threading.Tasks;
-
-namespace Reactive.Kafka
+﻿namespace Reactive.Kafka
 {
     public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError
     {

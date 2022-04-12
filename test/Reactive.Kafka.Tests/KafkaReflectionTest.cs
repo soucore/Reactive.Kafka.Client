@@ -1,20 +1,9 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Reactive.Kafka.Extensions;
-using Reactive.Kafka.Tests.Types;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace Reactive.Kafka.Tests
+﻿namespace Reactive.Kafka.Tests
 {
     public class KafkaReflectionTest
     {
-        private IServiceProvider provider;
+        private readonly IServiceProvider provider;
+        private readonly Fixture fixture = new();
 
         public KafkaReflectionTest()
         {
@@ -22,6 +11,7 @@ namespace Reactive.Kafka.Tests
             var services = new ServiceCollection();
 
             services.AddSingleton<ILoggerFactory, LoggerFactory>();
+            services.AddSingleton<IList<IConsumerWrapper>, List<IConsumerWrapper>>();
             services.AddTransient(provider =>
             {
                 return new ConsumerConfig()
@@ -35,166 +25,134 @@ namespace Reactive.Kafka.Tests
         }
 
         [Fact]
-        public void ConsumerWithoutTopicSubscription()
-        {
-            // Act
-            IConsumer<string, string> consumer = ServiceCollectionExtensions
-                .ApplyReflection(provider, typeof(Consumer1), test: true);
-
-            // Assert
-            Assert.Null(consumer);
-        }
-
-        [Fact]
-        public void ConsumerWithTopicSubscription()
-        {
-            // Act
-            IConsumer<string, string> consumer = ServiceCollectionExtensions
-                .ApplyReflection(provider, typeof(Consumer2), test: true);
-
-            // Assert
-            Assert.NotEmpty(consumer.Subscription);
-            Assert.Single(consumer.Subscription);
-            Assert.NotNull(consumer.Subscription.FirstOrDefault(topic => topic == "test-topic"));
-        }
-
-        [Fact]
-        public void EnsuresConsumerWrapperHasBeenCreated()
-        {
-            ServiceCollectionExtensions.listConsumerWrapper.Clear();
-            ServiceCollectionExtensions.partitionsDict.Clear();
-
-            // Act
-            IConsumer<string, string> consumer = ServiceCollectionExtensions
-                .ApplyReflection(provider, typeof(Consumer2), test: true);
-
-            // Assert
-            Assert.NotEmpty(ServiceCollectionExtensions.listConsumerWrapper);
-            Assert.Single(ServiceCollectionExtensions.listConsumerWrapper);
-        }
-
-        [Fact]
-        public async Task TryConnectWrongKafkaServer()
+        public void ShouldCreateAppropriateConsumerWrapper()
         {
             // Arrange
-            Func<Task> function = () =>
-            {
-                ServiceCollectionExtensions.PartitionsDiscovery("wrongserver:9092");
-                return Task.CompletedTask;
-            };
+            var sut = KafkaReflection.CreateInstance(provider, typeof(Consumer1), isTest: true);
+
+            // Act
+            sut.GenConsumerWrapperType();
 
             // Assert
-            await Assert.ThrowsAsync<KafkaException>(function);
+            sut.consumerWrapperType.Should().NotBeNull();
+            sut.consumerWrapperType.Should().BeAssignableTo<ConsumerWrapper<string>>();
         }
 
         [Fact]
-        public void PartitionsDiscoveryTest()
+        public void ShouldBuildIncorrectlyConsumer()
         {
-            ServiceCollectionExtensions.listConsumerWrapper.Clear();
-            ServiceCollectionExtensions.partitionsDict.Clear();
-
             // Arrange
-            List<PartitionMetadata> partitions1 = new()
-            {
-                new PartitionMetadata(1, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-                new PartitionMetadata(2, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-                new PartitionMetadata(3, 1, Array.Empty<int>(), Array.Empty<int>(), null)
-            };
-
-            List<PartitionMetadata> partitions2 = new()
-            {
-                new PartitionMetadata(4, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-                new PartitionMetadata(5, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-            };
-
-            List<TopicMetadata> topics = new()
-            {
-                new TopicMetadata("topic1", partitions1, null),
-                new TopicMetadata("topic2", partitions2, null)
-            };
-
-            Metadata meta = new(new(), topics, 0, null);
-
-            int expectedTopic1 = 3;
-            int expectedTopic2 = 2;
+            var consumerInstance = new Consumer1();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
 
             // Act
-            ServiceCollectionExtensions.FillPartitionsDict(meta);
+            var sut = kafkaReflection.BuildConsumer(consumerInstance);
 
             // Assert
-            Assert.True(ServiceCollectionExtensions.partitionsDict.ContainsKey("topic1"));
-            Assert.True(ServiceCollectionExtensions.partitionsDict.ContainsKey("topic2"));
-            Assert.NotEmpty(ServiceCollectionExtensions.partitionsDict);
-            Assert.Equal(expectedTopic1, ServiceCollectionExtensions.partitionsDict["topic1"]);
-            Assert.Equal(expectedTopic2, ServiceCollectionExtensions.partitionsDict["topic2"]);
+            sut.Should().BeNull();
         }
 
         [Fact]
-        public void EnsureOneConsumerPerPartition()
+        public void ShouldBuildAppropriateConsumer()
         {
-            ServiceCollectionExtensions.listConsumerWrapper.Clear();
-            ServiceCollectionExtensions.partitionsDict.Clear();
-
             // Arrange
-            List<PartitionMetadata> partitions = new()
-            {
-                new PartitionMetadata(1, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-                new PartitionMetadata(2, 1, Array.Empty<int>(), Array.Empty<int>(), null),
-                new PartitionMetadata(3, 1, Array.Empty<int>(), Array.Empty<int>(), null)
-            };
-
-            List<TopicMetadata> topics = new()
-            {
-                new TopicMetadata("test-topic", partitions, null),
-            };
-
-            Metadata meta = new(new(), topics, 0, null);
-
-            int consumersExpected = partitions.Count; // 3
+            var consumerInstance = new Consumer2();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
 
             // Act
-            ServiceCollectionExtensions.FillPartitionsDict(meta);
-            ServiceCollectionExtensions.ApplyConsumerPerPartition(provider, typeof(Consumer2), test: true);
+            var sut = kafkaReflection.BuildConsumer(consumerInstance);
 
             // Assert
-            Assert.NotEmpty(ServiceCollectionExtensions.listConsumerWrapper);
-            Assert.Equal(consumersExpected, ServiceCollectionExtensions.listConsumerWrapper.Count);
+            sut.Should().NotBeNull();
+            sut.Should().BeAssignableTo<IConsumer<string, string>>();
+            sut.Subscription.Should().HaveCount(1);
+            sut.Subscription.Should().Contain("test-topic");
         }
 
         [Fact]
-        public void EnsureConsumersPerQuantity()
+        public void ShouldBuildIncorrectlyProducer()
         {
-            ServiceCollectionExtensions.listConsumerWrapper.Clear();
-            ServiceCollectionExtensions.partitionsDict.Clear();
-
             // Arrange
-            int consumersExpected = 2;
+            var consumerInstance = new Consumer1();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
 
             // Act
-            ServiceCollectionExtensions.ApplyConsumerPerQuantity(provider, typeof(Consumer2), quantity: 2, test: true);
+            var sut = kafkaReflection.BuildProducer(consumerInstance);
 
             // Assert
-            Assert.NotEmpty(ServiceCollectionExtensions.listConsumerWrapper);
-            Assert.Equal(consumersExpected, ServiceCollectionExtensions.listConsumerWrapper.Count);
+            sut.Should().BeNull();
         }
 
         [Fact]
-        public void EnsureConsumersAssembly()
+        public void ShouldBuildAppropriateProducer()
         {
-            ServiceCollectionExtensions.listConsumerWrapper.Clear();
-            ServiceCollectionExtensions.partitionsDict.Clear();
-
             // Arrange
-            int consumersExpected = 2; 
-            int consumersNotExpected = 3; // There are 3 consumers but one isn't assigned 
+            var consumerInstance = new Consumer3();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
 
             // Act
-            ServiceCollectionExtensions.ApplyConsumersFromAssembly(provider, typeof(KafkaReflectionTest).Assembly, test: true);
+            var sut = kafkaReflection.BuildProducer(consumerInstance);
 
             // Assert
-            Assert.NotEmpty(ServiceCollectionExtensions.listConsumerWrapper);
-            Assert.NotEqual(consumersNotExpected, ServiceCollectionExtensions.listConsumerWrapper.Count);
-            Assert.Equal(consumersExpected, ServiceCollectionExtensions.listConsumerWrapper.Count);
+            sut.Should().NotBeNull();
+            sut.Should().BeAssignableTo<IProducer<string, string>>();
+        }
+
+        [Fact]
+        public void ShouldBuildIncorrectlyConsumerAndProducer()
+        {
+            // Arrange
+            var consumerInstance = new Consumer1();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
+
+            // Act
+            (IConsumer<string, string> Consumer, IProducer<string, string> Producer) = kafkaReflection.Build();
+
+            // Assert
+            Consumer.Should().BeNull();
+            Producer.Should().BeNull();
+        }
+
+        [Fact]
+        public void ShouldBuildAppropriateConsumerAndProducer()
+        {
+            // Arrange
+            var consumerInstance = new Consumer3();
+            var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerInstance.GetType(), isTest: true);
+
+            // Act
+            (IConsumer<string, string> Consumer, IProducer<string, string> Producer) = kafkaReflection.Build();
+
+            // Assert
+            Consumer.Should().NotBeNull();
+            Consumer.Should().BeAssignableTo<IConsumer<string, string>>();
+            Producer.Should().NotBeNull();
+            Producer.Should().BeAssignableTo<IProducer<string, string>>();
+        }
+
+        [Fact]
+        public void ShouldCorrectlyBindEvents()
+        {
+            // Arrange
+            var consumerStub = new Mock<IConsumer<string, string>>();
+            var loggerStub = new Mock<ILogger>();
+            var loggerFactoryStub = new Mock<ILoggerFactory>();
+
+            loggerStub.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(false);
+            loggerFactoryStub.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(loggerStub.Object);
+
+            var consumerInstanceMock = new Mock<Consumer3>(Array.Empty<object>());
+            var consumerWrapperInstance = new ConsumerWrapper<string>(loggerFactoryStub.Object, consumerStub.Object);
+
+            // Act
+            KafkaReflection.BindConsumerEvents(consumerInstanceMock.Object, consumerWrapperInstance);
+
+            consumerWrapperInstance.ConvertMessage(fixture.Create<Message<string, string>>());
+
+            // Assert
+            consumerInstanceMock.Verify(x => x.OnBeforeSerialization(It.IsAny<string>()), Times.Once);
+            consumerInstanceMock.Verify(x => x.OnAfterSerialization(It.IsAny<string>()), Times.Once);
+            consumerInstanceMock.Verify(x => x.OnConsume(It.IsAny<ConsumerMessage<string>>(), It.IsAny<Commit>()), Times.Once);
         }
     }
 }

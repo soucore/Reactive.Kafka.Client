@@ -1,12 +1,4 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.Logging;
-using Reactive.Kafka.Errors;
-using Reactive.Kafka.Exceptions;
-using Reactive.Kafka.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Convert = Reactive.Kafka.Helpers.Convert;
+﻿using Convert = Reactive.Kafka.Helpers.Convert;
 
 namespace Reactive.Kafka
 {
@@ -37,6 +29,7 @@ namespace Reactive.Kafka
         }
 
         public IConsumer<string, string> Consumer { get; }
+        public DateTime LastConsume { get; private set; } = DateTime.Now;
 
         public Task ConsumerStart()
         {
@@ -53,6 +46,8 @@ namespace Reactive.Kafka
 
                         if (_logger.IsEnabled(LogLevel.Debug))
                             _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
+
+                        LastConsume = DateTime.Now;
 
                         ConvertMessage(result.Message);
                     }
@@ -103,7 +98,6 @@ namespace Reactive.Kafka
             await OnConsumeError.Invoke(new KafkaConsumerError(exception), Consumer.Commit);
         }
 
-        #region Non-Public Methods
         public async Task SuccessfulConversion(T message, Message<string, string> kafkaMessage)
         {
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -120,6 +114,5 @@ namespace Reactive.Kafka
 
             throw new KafkaConsumerException(kafkaMessage.Value);
         }
-        #endregion
     }
 }

@@ -1,20 +1,17 @@
-﻿using System;
-using System.Reflection;
-
-namespace Reactive.Kafka.Helpers
+﻿namespace Reactive.Kafka.Helpers
 {
     public static class Reflection
     {
-        public static void CreateDelegate(object source, EventInfo @event, object target, MethodInfo method)
+        public static void CreateDelegate(object source, string @event, object target, string method)
         {
-            if (method is not null)
+            if (!string.IsNullOrEmpty(method))
             {
-                Delegate @delegate = Delegate
-                    .CreateDelegate(
-                        @event.EventHandlerType,
-                        target, method);
+                EventInfo eventInfo = source.GetType().GetEvent(@event);
 
-                @event.AddEventHandler(source, @delegate);
+                var @delegate = Delegate
+                    .CreateDelegate(eventInfo.EventHandlerType, target, method);
+
+                eventInfo.AddEventHandler(source, @delegate);
             }
         }
     }

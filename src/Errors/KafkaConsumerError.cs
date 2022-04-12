@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Reactive.Kafka.Errors
+﻿namespace Reactive.Kafka.Errors
 {
     public sealed class KafkaConsumerError
     {

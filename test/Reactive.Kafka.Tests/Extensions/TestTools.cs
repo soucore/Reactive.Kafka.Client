@@ -1,6 +1,4 @@
-﻿using System;
-using Reactive.Kafka.Tests.Asserts;
-using Xunit;
+﻿using Reactive.Kafka.Tests.Asserts;
 
 namespace Reactive.Kafka.Tests.Extensions;
 
@@ -14,7 +12,7 @@ public static class TestTools
         }
         else
         {
-            AssertCustom.Fail(message); 
+            AssertCustom.Fail(message);
         }
     }
 }

@@ -1,0 +1,11 @@
+﻿global using AutoFixture;
+global using Confluent.Kafka;
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Moq;
+global using Reactive.Kafka.Interfaces;
+global using Reactive.Kafka.Tests.Types;
+global using System;
+global using System.Collections.Generic;
+global using Xunit;

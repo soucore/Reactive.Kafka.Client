@@ -1,9 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Reactive.Kafka.Extensions;
-using Reactive.Kafka.Tests.Types;
-using System;
+﻿using Reactive.Kafka.Extensions;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Reactive.Kafka.Tests
 {
@@ -107,6 +103,36 @@ namespace Reactive.Kafka.Tests
             await Assert.ThrowsAsync<ArgumentNullException>(servicesParamIsNull);
             await Assert.ThrowsAsync<ArgumentNullException>(bootstrapParamIsNull);
             await Assert.ThrowsAsync<ArgumentNullException>(setupActionIsNull);
+        }
+
+        [Fact]
+        public void Test1()
+        {
+            // Arrange
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddSingleton<ILoggerFactory, LoggerFactory>();
+            services.AddSingleton(ServiceCollectionExtensions.listConsumerWrapper);
+            services.AddTransient(provider =>
+            {
+                return new ConsumerConfig()
+                {
+                    BootstrapServers = "localhost:9092",
+                    GroupId = "Group"
+                };
+            });
+
+            IServiceProvider provider = services.BuildServiceProvider();
+
+            // Act
+            ServiceCollectionExtensions
+                .ApplyConsumerPerQuantity(provider, typeof(Consumer2), 2, test: true);
+
+            // Assert
+            ServiceCollectionExtensions
+                .listConsumerWrapper
+                .Should()
+                .HaveCount(2);
         }
     }
 }

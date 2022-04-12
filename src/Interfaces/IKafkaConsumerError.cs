@@ -1,7 +1,4 @@
-﻿using Reactive.Kafka.Errors;
-using System.Threading.Tasks;
-
-namespace Reactive.Kafka.Interfaces
+﻿namespace Reactive.Kafka.Interfaces
 {
     public interface IKafkaConsumerError
     {
