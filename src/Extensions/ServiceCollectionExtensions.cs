@@ -104,10 +104,11 @@
                 .GetTypes()
                 .Where(type => type.GetInterface(typeof(IKafkaConsumer<>).Name, true) is not null);
 
-            var kafkaReflection = KafkaReflection.CreateInstance(provider, null, test);
-
             foreach (Type type in types)
-                kafkaReflection.Build(alternativeType: type);
+            {
+                var kafkaReflection = KafkaReflection.CreateInstance(provider, type, test);
+                kafkaReflection.Build();
+            }
         }
 
         public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, string bootstrapServer, bool test = false)
