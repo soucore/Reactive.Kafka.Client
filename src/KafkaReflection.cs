@@ -99,10 +99,15 @@ namespace Reactive.Kafka
 
         public static void BindConsumerEvents(object consumerInstance, object consumerWrapperInstance)
         {
-            CreateDelegate(consumerWrapperInstance, "OnBeforeSerialization", consumerInstance, "OnBeforeSerialization");
-            CreateDelegate(consumerWrapperInstance, "OnAfterSerialization", consumerInstance, "OnAfterSerialization");
             CreateDelegate(consumerWrapperInstance, "OnConsume", consumerInstance, "OnConsume");
-            CreateDelegate(consumerWrapperInstance, "OnConsumeError", consumerInstance, "OnConsumeError");
+
+            if (consumerInstance is IKafkaSerialization)
+            {
+                CreateDelegate(consumerWrapperInstance, "OnBeforeSerialization", consumerInstance, "OnBeforeSerialization");
+                CreateDelegate(consumerWrapperInstance, "OnAfterSerialization", consumerInstance, "OnAfterSerialization");
+            }
+            if (consumerInstance is IKafkaConsumerError)
+                CreateDelegate(consumerWrapperInstance, "OnConsumeError", consumerInstance, "OnConsumeError");
         }
 
         public static void BindProducerEvents(object consumerInstance, object producerWrapperInstance)
@@ -113,11 +118,16 @@ namespace Reactive.Kafka
 
         public static KafkaReflection CreateInstance(IServiceProvider provider, Type type, bool isTest)
         {
-            var kafkaReflection = (KafkaReflection)ActivatorUtilities
-                .CreateInstance(provider, typeof(KafkaReflection), new object[] { provider, type });
+            if(type is not null)
+            {
+                var instance = ActivatorUtilities.CreateInstance(provider, typeof(KafkaReflection), new object[] { provider, type });
+                var kafkaReflection = (KafkaReflection)instance;
+                kafkaReflection.IsTest = isTest;
 
-            kafkaReflection.IsTest = isTest;
-            return kafkaReflection;
+                return kafkaReflection;
+            }
+
+            throw new ArgumentException("Parameter type cannot be null.");   
         }
     }
 }

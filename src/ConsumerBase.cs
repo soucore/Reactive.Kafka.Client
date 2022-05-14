@@ -1,6 +1,6 @@
 ﻿namespace Reactive.Kafka
 {
-    public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError
+    public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError, IKafkaSerialization<T>
     {
         #region producer events
         public event Action<string, Message<string, string>> OnProduce;
