@@ -85,7 +85,7 @@ namespace Reactive.Kafka.Tests
             }
 
             // Assert
-            await Assert.ThrowsAsync<KafkaConsumerException>(action);
+            await Assert.ThrowsAsync<KafkaSerializationException>(action);
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace Reactive.Kafka.Tests
             }
 
             // Assert
-            await Assert.ThrowsAsync<KafkaConsumerException>(action);
+            await Assert.ThrowsAsync<KafkaSerializationException>(action);
         }
 
         [Theory]

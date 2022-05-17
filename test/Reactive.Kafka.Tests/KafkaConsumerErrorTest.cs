@@ -41,30 +41,35 @@ public class KafkaConsumerErrorTest
     public void PlacesCustomExceptionAndChecksPropertyValueValid()
     {
         // Arrange
-        var value = new KafkaConsumerException("Exception generated");
-        const string expected = "Exception generated";
+        var value = new KafkaConsumerException("Exception generated", "Message Kafka");
+        const string expectedMessageError = "Exception generated";
+        const string expectedMessageKafka = "Message Kafka";
 
         // Act
         var consumerError = new KafkaConsumerError(value);
 
         // Assert
         Assert.NotNull(consumerError.Exception);
-        Assert.True(consumerError.KafkaMessage == expected);
+        Assert.True(consumerError.Exception.Message == expectedMessageError);
+        Assert.True(consumerError.KafkaMessage == expectedMessageKafka);
     }
     
     [Fact]
     public void PlacesCustomExceptionAndChecksPropertyValueInValid()
     {
         // Arrange
-        var value = new KafkaConsumerException("Exception generated Error");
-        const string expected = "Exception generated";
+        var value = new KafkaConsumerException("Exception generated Error", "Message Kafka");
 
         // Act
         var consumerError = new KafkaConsumerError(value);
 
         // Assert
         Assert.NotNull(consumerError.Exception);
-        Assert.False(consumerError.KafkaMessage == expected);
+        Assert.False(consumerError.Exception.Message == "Exception generated");
+        Assert.True(consumerError.KafkaMessage == "Message Kafka");
+
+        Assert.True(consumerError.Exception.Message == "Exception generated Error");
+        Assert.False(consumerError.KafkaMessage == "Message Kafka not serialize");
     }
     
     [Fact]

@@ -17,6 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsumerPerPartition", "exa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reactive.Kafka.Tests", "test\Reactive.Kafka.Tests\Reactive.Kafka.Tests.csproj", "{7088103F-8D1F-44B2-8355-17F56E6DE1F7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3E4034E3-8794-47D4-90E8-0BF4E628C3BD}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CODEOWNERS = CODEOWNERS
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

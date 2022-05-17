@@ -42,14 +42,8 @@ namespace Reactive.Kafka
                 {
                     try
                     {
-                        var result = Consumer.Consume();
-
-                        if (_logger.IsEnabled(LogLevel.Debug))
-                            _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
-
-                        LastConsume = DateTime.Now;
-
-                        ConvertMessage(result.Message);
+                        var message = ConsumerMessage();
+                        ConvertMessage(message);
                     }
                     catch (KafkaConsumerException ex)
                     {
@@ -74,6 +68,18 @@ namespace Reactive.Kafka
             }, TaskCreationOptions.LongRunning);
         }
 
+        public Message<string, string> ConsumerMessage()
+        {
+            var result = Consumer.Consume();
+
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Message received: {MessageValue}", result.Message.Value);
+
+            LastConsume = DateTime.Now;
+
+            return result.Message;
+        }
+
         public void ConvertMessage(Message<string, string> kafkaMessage)
         {
             if (OnBeforeSerialization is not null)
@@ -93,7 +99,7 @@ namespace Reactive.Kafka
             }
         }
 
-        public async Task HandleException(Exception exception)
+        public async Task HandleException(KafkaConsumerException exception)
         {
             await OnConsumeError.Invoke(new KafkaConsumerError(exception), Consumer.Commit);
         }
@@ -109,10 +115,11 @@ namespace Reactive.Kafka
 
         public void UnsuccessfulConversion(Message<string, string> kafkaMessage)
         {
+            var message = $"Unable convert message to {typeof(T).Name}";
             if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("Unable convert message to '{TypeName}'", typeof(T).Name);
+                _logger.LogDebug(message);
 
-            throw new KafkaConsumerException(kafkaMessage.Value);
+            throw new KafkaSerializationException(message, kafkaMessage.Value);
         }
     }
 }
