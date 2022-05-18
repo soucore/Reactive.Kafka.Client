@@ -77,7 +77,7 @@ namespace Reactive.Kafka.Tests
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
-                        null, "localhost:9092");
+                        null, "localhost:9092", groupId: null);
 
                 return Task.CompletedTask;
             }
@@ -86,7 +86,7 @@ namespace Reactive.Kafka.Tests
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
-                        services, null);
+                        services, null, groupId: null);
 
                 return Task.CompletedTask;
             }

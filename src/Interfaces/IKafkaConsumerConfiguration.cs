@@ -1,6 +1,6 @@
 ﻿namespace Reactive.Kafka.Interfaces
 {
-    internal interface IConsumerConfiguration
+    public interface IKafkaConsumerConfiguration
     {
         /// <summary>
         /// Consumer configuration.

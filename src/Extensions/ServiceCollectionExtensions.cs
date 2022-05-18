@@ -73,25 +73,37 @@
             return services;
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, bool respectObjectContract = true)
+        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, string groupId = default)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
 
+            return services.AddReactiveKafkaConsumer(config =>
+            {
+                config.BootstrapServers = bootstrapServer;
+                config.GroupId = groupId;
+            }, Assembly.GetCallingAssembly());
+        }
+
+        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, Action<ConsumerConfig> setupAction, Assembly assembly = default)
+        {
+            ArgumentNullException.ThrowIfNull(setupAction);
+
             services.AddSingleton(listConsumerWrapper);
             services.AddTransient(provider =>
             {
-                KafkaConfiguration config = new();
+                ConsumerConfig config = new();
+                setupAction(config);
 
-                config.RespectObjectContract = respectObjectContract;
-                config.ConsumerConfig.BootstrapServers = bootstrapServer;
-                config.ConsumerConfig.GroupId = Guid.NewGuid().ToString();
+                config.GroupId ??= Guid.NewGuid().ToString();
 
-                return config;
+                return new KafkaConfiguration { ConsumerConfig = config };
             });
 
+            assembly ??= Assembly.GetCallingAssembly();
+
             ApplyConsumersFromAssembly(
-                services.BuildServiceProvider(), Assembly.GetCallingAssembly());
+                services.BuildServiceProvider(), assembly);
 
             return services;
         }
