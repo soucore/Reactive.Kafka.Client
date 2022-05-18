@@ -1,4 +1,6 @@
-﻿namespace Reactive.Kafka.Tests
+﻿using Reactive.Kafka.Configurations;
+
+namespace Reactive.Kafka.Tests
 {
     public class KafkaReflectionTest
     {
@@ -14,11 +16,12 @@
             services.AddSingleton<IList<IConsumerWrapper>, List<IConsumerWrapper>>();
             services.AddTransient(provider =>
             {
-                return new ConsumerConfig()
-                {
-                    BootstrapServers = "localhost:9092",
-                    GroupId = "Group"
-                };
+                var config = new KafkaConfiguration();
+
+                config.ConsumerConfig.BootstrapServers = "localhost:9092";
+                config.ConsumerConfig.GroupId = "Group";
+
+                return config;
             });
 
             provider = services.BuildServiceProvider();
@@ -142,12 +145,15 @@
             loggerFactoryStub.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(loggerStub.Object);
 
             var consumerInstanceMock = new Mock<Consumer3>(Array.Empty<object>());
-            var consumerWrapperInstance = new ConsumerWrapper<string>(loggerFactoryStub.Object, consumerStub.Object);
+            var consumerWrapperInstance = new ConsumerWrapper<string>(loggerFactoryStub.Object, consumerStub.Object, new());
 
             // Act
             KafkaReflection.BindConsumerEvents(consumerInstanceMock.Object, consumerWrapperInstance);
 
-            consumerWrapperInstance.ConvertMessage(fixture.Create<Message<string, string>>());
+            (_, string message) = consumerWrapperInstance
+                .ConvertMessage(fixture.Create<Message<string, string>>());
+
+            consumerWrapperInstance.SuccessfulConversion("", message);
 
             // Assert
             consumerInstanceMock.Verify(x => x.OnBeforeSerialization(It.IsAny<string>()), Times.Once);

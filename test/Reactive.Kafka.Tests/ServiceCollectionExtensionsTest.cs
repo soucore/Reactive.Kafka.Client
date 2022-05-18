@@ -1,4 +1,5 @@
-﻿using Reactive.Kafka.Extensions;
+﻿using Reactive.Kafka.Configurations;
+using Reactive.Kafka.Extensions;
 using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Tests
@@ -76,7 +77,7 @@ namespace Reactive.Kafka.Tests
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
-                        null, "localhost:9092", groupId: null);
+                        null, "localhost:9092");
 
                 return Task.CompletedTask;
             }
@@ -85,16 +86,7 @@ namespace Reactive.Kafka.Tests
             {
                 ServiceCollectionExtensions
                     .AddReactiveKafkaConsumer(
-                        services, null, groupId: null);
-
-                return Task.CompletedTask;
-            }
-
-            Task setupActionIsNull()
-            {
-                ServiceCollectionExtensions
-                    .AddReactiveKafkaConsumer(
-                        services, null, assembly: null);
+                        services, null);
 
                 return Task.CompletedTask;
             }
@@ -102,11 +94,10 @@ namespace Reactive.Kafka.Tests
             // Assert
             await Assert.ThrowsAsync<ArgumentNullException>(servicesParamIsNull);
             await Assert.ThrowsAsync<ArgumentNullException>(bootstrapParamIsNull);
-            await Assert.ThrowsAsync<ArgumentNullException>(setupActionIsNull);
         }
 
         [Fact]
-        public void Test1()
+        public void ShoudCountListConsumerWrapper()
         {
             // Arrange
             IServiceCollection services = new ServiceCollection();
@@ -115,11 +106,12 @@ namespace Reactive.Kafka.Tests
             services.AddSingleton(ServiceCollectionExtensions.listConsumerWrapper);
             services.AddTransient(provider =>
             {
-                return new ConsumerConfig()
-                {
-                    BootstrapServers = "localhost:9092",
-                    GroupId = "Group"
-                };
+                var config = new KafkaConfiguration();
+
+                config.ConsumerConfig.BootstrapServers = "localhost:9092";
+                config.ConsumerConfig.GroupId = "Group";
+
+                return config;
             });
 
             IServiceProvider provider = services.BuildServiceProvider();

@@ -2,9 +2,7 @@
 {
     public class KafkaSerializationException : KafkaConsumerException
     {
-        public KafkaSerializationException(string message, string messageKafka) 
-            : base(message, messageKafka)
-        {
-        }
+        public KafkaSerializationException(string message, string messageKafka)
+            : base(message, messageKafka) { }
     }
 }

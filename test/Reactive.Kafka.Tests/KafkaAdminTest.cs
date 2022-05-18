@@ -1,4 +1,6 @@
-﻿namespace Reactive.Kafka.Tests
+﻿using Reactive.Kafka.Configurations;
+
+namespace Reactive.Kafka.Tests
 {
     public class KafkaAdminTest
     {
@@ -17,6 +19,7 @@
                 .Returns(loggerStub.Object);
 
             services.AddSingleton(loggerFactorySub.Object);
+            services.AddSingleton(new KafkaConfiguration());
 
             provider = services.BuildServiceProvider();
         }
@@ -64,7 +67,7 @@
         public void ShouldCorrectlyMapTopicsAndTheirPartitionsFromMetadata()
         {
             // Arrange
-            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, "localhost:9092", isTest: true);
+            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, isTest: true);
             var metadata = new Metadata(null, fixture.Create<List<TopicMetadata>>(), 0, null);
 
             // Act
@@ -95,7 +98,7 @@
 
         private (KafkaAdmin, Metadata, Mock<IAdminClient>) Setup()
         {
-            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, "localhost:9092", isTest: true);
+            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, isTest: true);
             var metadata = new Metadata(null, fixture.Create<List<TopicMetadata>>(), 0, null);
             var adminClientStub = new Mock<IAdminClient>();
 

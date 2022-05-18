@@ -32,10 +32,8 @@ namespace Reactive.Kafka
                 .MakeGenericType(genericTypeArgumentMessage);
         }
 
-        public (IConsumer<string, string>, IProducer<string, string>) Build(Type alternativeType = null)
+        public (IConsumer<string, string>, IProducer<string, string>) Build()
         {
-            type ??= alternativeType;
-
             object consumerInstance = ActivatorUtilities
                 .CreateInstance(provider, type);
 
@@ -47,13 +45,16 @@ namespace Reactive.Kafka
 
         public IConsumer<string, string> BuildConsumer(object consumerInstance)
         {
-            var config = provider.GetRequiredService<ConsumerConfig>();
+            var config = provider.GetService<KafkaConfiguration>();
 
             type.GetMethod("OnConsumerBuilder")?
-                .Invoke(consumerInstance, new object[] { config });
+                .Invoke(consumerInstance, new object[] { config.ConsumerConfig });
 
-            var builder = new ConsumerBuilder<string, string>(config);
+            var builder = new ConsumerBuilder<string, string>(config.ConsumerConfig);
             var consumer = builder.Build();
+
+            if (!string.IsNullOrEmpty(config.Topic))
+                consumer.Subscribe(config.Topic);
 
             type.GetMethod("OnConsumerConfiguration")?
                 .Invoke(consumerInstance, new object[] { consumer });
@@ -62,7 +63,7 @@ namespace Reactive.Kafka
                 return default;
 
             object consumerWrapperInstance = ActivatorUtilities
-                .CreateInstance(provider, consumerWrapperType, new object[] { consumer });
+                .CreateInstance(provider, consumerWrapperType, new object[] { consumer, config });
 
             BindConsumerEvents(consumerInstance, consumerWrapperInstance);
 
@@ -106,6 +107,7 @@ namespace Reactive.Kafka
                 CreateDelegate(consumerWrapperInstance, "OnBeforeSerialization", consumerInstance, "OnBeforeSerialization");
                 CreateDelegate(consumerWrapperInstance, "OnAfterSerialization", consumerInstance, "OnAfterSerialization");
             }
+
             if (consumerInstance is IKafkaConsumerError)
                 CreateDelegate(consumerWrapperInstance, "OnConsumeError", consumerInstance, "OnConsumeError");
         }
@@ -118,16 +120,13 @@ namespace Reactive.Kafka
 
         public static KafkaReflection CreateInstance(IServiceProvider provider, Type type, bool isTest)
         {
-            if(type is not null)
-            {
-                var instance = ActivatorUtilities.CreateInstance(provider, typeof(KafkaReflection), new object[] { provider, type });
-                var kafkaReflection = (KafkaReflection)instance;
-                kafkaReflection.IsTest = isTest;
+            ArgumentNullException.ThrowIfNull(type);
 
-                return kafkaReflection;
-            }
+            var kafkaReflection = (KafkaReflection)ActivatorUtilities
+                .CreateInstance(provider, typeof(KafkaReflection), new object[] { provider, type });
 
-            throw new ArgumentException("Parameter type cannot be null.");   
+            kafkaReflection.IsTest = isTest;
+            return kafkaReflection;
         }
     }
 }

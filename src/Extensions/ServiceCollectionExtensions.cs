@@ -4,81 +4,94 @@
     {
         public static readonly IList<IConsumerWrapper> listConsumerWrapper = new List<IConsumerWrapper>();
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string groupId = default)
+        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, string bootstrapServer, string topic = default, string groupId = default)
             where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
 
-            groupId ??= Guid.NewGuid().ToString();
+            return services.AddReactiveKafkaConsumerPerPartition<T>(config =>
+            {
+                config.Topic = topic;
+                config.ConsumerConfig.GroupId = groupId;
+                config.ConsumerConfig.BootstrapServers = bootstrapServer;
+            });
+        }
 
-            services.AddSingleton(listConsumerWrapper);
+        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<KafkaConfiguration> setupAction)
+        {
+            ArgumentNullException.ThrowIfNull(setupAction);
+
             services.AddTransient(provider =>
             {
-                return new ConsumerConfig()
-                {
-                    BootstrapServers = bootstrapServer,
-                    GroupId = groupId
-                };
+                KafkaConfiguration config = new();
+                setupAction(config);
+
+                config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
+
+                return config;
             });
 
-            ApplyConsumerPerPartition(services.BuildServiceProvider(), typeof(T), bootstrapServer);
+            services.AddSingleton(listConsumerWrapper);
+
+            ApplyConsumerPerPartition(services.BuildServiceProvider(), typeof(T));
             return services;
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, string bootstrapServer, int quantity, string groupId = default)
+        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, string bootstrapServer, int quantity, string topic = default, string groupId = default)
             where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
+            ArgumentNullException.ThrowIfNull(topic);
 
-            groupId ??= Guid.NewGuid().ToString();
+            return services.AddReactiveKafkaConsumerPerQuantity<T>(quantity, config =>
+            {
+                config.Topic = topic;
+                config.ConsumerConfig.GroupId = groupId;
+                config.ConsumerConfig.BootstrapServers = bootstrapServer;
+            });
+        }
 
-            services.AddSingleton(listConsumerWrapper);
+        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<KafkaConfiguration> setupAction)
+        {
+            ArgumentNullException.ThrowIfNull(setupAction);
+
             services.AddTransient(provider =>
             {
-                return new ConsumerConfig()
-                {
-                    BootstrapServers = bootstrapServer,
-                    GroupId = groupId
-                };
+                KafkaConfiguration config = new();
+                setupAction(config);
+
+                config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
+
+                return config;
             });
+
+            services.AddSingleton(listConsumerWrapper);
 
             ApplyConsumerPerQuantity(services.BuildServiceProvider(), typeof(T), quantity);
             return services;
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, string groupId = default)
+        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, string bootstrapServer, bool respectObjectContract = true)
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
 
-            groupId ??= Guid.NewGuid().ToString();
-
-            return services.AddReactiveKafkaConsumer(config =>
-            {
-                config.BootstrapServers = bootstrapServer;
-                config.GroupId = groupId;
-            }, Assembly.GetCallingAssembly());
-        }
-
-        public static IServiceCollection AddReactiveKafkaConsumer(this IServiceCollection services, Action<ConsumerConfig> setupAction, Assembly assembly = default)
-        {
-            ArgumentNullException.ThrowIfNull(setupAction);
-
             services.AddSingleton(listConsumerWrapper);
             services.AddTransient(provider =>
             {
-                ConsumerConfig config = new();
-                setupAction(config);
+                KafkaConfiguration config = new();
+
+                config.RespectObjectContract = respectObjectContract;
+                config.ConsumerConfig.BootstrapServers = bootstrapServer;
+                config.ConsumerConfig.GroupId = Guid.NewGuid().ToString();
 
                 return config;
             });
 
-            assembly ??= Assembly.GetCallingAssembly();
-
             ApplyConsumersFromAssembly(
-                services.BuildServiceProvider(), assembly);
+                services.BuildServiceProvider(), Assembly.GetCallingAssembly());
 
             return services;
         }
@@ -106,17 +119,18 @@
 
             foreach (Type type in types)
             {
-                var kafkaReflection = KafkaReflection.CreateInstance(provider, type, test);
-                kafkaReflection.Build();
+                KafkaReflection
+                    .CreateInstance(provider, type, test)
+                    .Build();
             }
         }
 
-        public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, string bootstrapServer, bool test = false)
+        public static void ApplyConsumerPerPartition(IServiceProvider provider, Type consumerType, bool test = false)
         {
             int? partitions = null;
             int? consumers = 0;
 
-            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, bootstrapServer, test);
+            var kafkaAdmin = KafkaAdmin.CreateInstance(provider, test);
             var kafkaReflection = KafkaReflection.CreateInstance(provider, consumerType, test);
 
             Dictionary<string, int> partitionsDict = kafkaAdmin.PartitionsDiscovery();

@@ -4,7 +4,7 @@
     {
         private readonly ILogger _logger;
 
-        public KafkaAdmin(ILoggerFactory loggerFactory, string bootstrapServer)
+        public KafkaAdmin(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger("Reactive.Kafka.Admin");
         }
@@ -50,16 +50,18 @@
             return dict;
         }
 
-        public static KafkaAdmin CreateInstance(IServiceProvider provider, string bootstrapServer, bool isTest)
+        public static KafkaAdmin CreateInstance(IServiceProvider provider, bool isTest)
         {
+            var kafkaConfiguration = provider.GetRequiredService<KafkaConfiguration>();
+
             var kafkaAdmin = (KafkaAdmin)ActivatorUtilities
-                .CreateInstance(provider, typeof(KafkaAdmin), new object[] { bootstrapServer });
+                .CreateInstance(provider, typeof(KafkaAdmin), Array.Empty<object>());
 
             if (!isTest)
             {
                 kafkaAdmin.AdminClient = new AdminClientBuilder(new AdminClientConfig
                 {
-                    BootstrapServers = bootstrapServer
+                    BootstrapServers = kafkaConfiguration.ConsumerConfig.BootstrapServers
                 }).Build();
             }
 
