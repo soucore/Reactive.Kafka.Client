@@ -1,6 +1,6 @@
 ﻿namespace Reactive.Kafka
 {
-    public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError, IKafkaSerialization<T>
+    public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerBuilder, IKafkaConsumerError, IKafkaSerialization<T>, IKafkaConsumerConfiguration
     {
         #region producer events
         public event Action<string, Message<string, string>> OnProduce;
@@ -18,7 +18,7 @@
         }
 
         #region Abstract Methods
-        public abstract void OnConsumerConfiguration(IConsumer<string, string> consumer);
+        public virtual void OnConsumerConfiguration(IConsumer<string, string> consumer) { }
         public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);
         #endregion
 

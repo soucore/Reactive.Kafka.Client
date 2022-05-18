@@ -1,7 +1,6 @@
 ﻿using Reactive.Kafka;
-using Reactive.Kafka.Errors;
 
-namespace UsingAbstractClass.Consumers
+namespace ConsumerPerPartition
 {
     public class Consumer2 : ConsumerBase<string>
     {
@@ -17,12 +16,6 @@ namespace UsingAbstractClass.Consumers
             _logger.LogInformation("{Message}", consumerMessage.Message);
             await Task.Delay(500);
             _logger.LogInformation("Good job!");
-        }
-
-        public override Task OnConsumeError(KafkaConsumerError consumerError, Commit commit)
-        {
-            _logger.LogError("Ops! Something is wrong!");
-            return Task.CompletedTask;
         }
     }
 }

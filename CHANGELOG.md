@@ -1,3 +1,14 @@
+# 1.2.2 - (pre release)
+## Enhancements
+
+- Added Exception Class for specific handling of serialization errors.
+- ...
+
+# 1.2.1
+## Enhancements
+
+- Fixed bug when consumer classes used interfaces.
+
 # 1.2.0
 
 ## Enhancements

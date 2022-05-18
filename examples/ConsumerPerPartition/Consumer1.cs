@@ -1,18 +1,20 @@
-﻿using Confluent.Kafka;
-using Reactive.Kafka;
+﻿using Reactive.Kafka;
 
 namespace ConsumerPerPartition
 {
-    internal class Consumer1 : ConsumerBase<Message>
+    public class Consumer1 : ConsumerBase<Message>
     {
-        public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
+        private readonly ILogger<Consumer1> _logger;
+
+        public Consumer1(ILogger<Consumer1> logger)
         {
-            return Task.CompletedTask;
+            _logger = logger;
         }
 
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
+        public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
         {
-            consumer.Subscribe("your-topic");
+            _logger.LogInformation("{Message}", consumerMessage.Message);
+            return Task.CompletedTask;
         }
     }
 }

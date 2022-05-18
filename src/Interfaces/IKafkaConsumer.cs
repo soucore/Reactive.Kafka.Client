@@ -9,12 +9,6 @@
         /// <param name="commit">Offset commit function</param>
         /// <returns></returns>
         Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);
-
-        /// <summary>
-        /// Consumer configuration.
-        /// </summary>
-        /// <param name="consumer">Consumer instance</param>
-        void OnConsumerConfiguration(IConsumer<string, string> consumer);
     }
 
     public interface IKafkaConsumer { }

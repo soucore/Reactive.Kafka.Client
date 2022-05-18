@@ -1,7 +1,13 @@
 ﻿namespace Reactive.Kafka.Errors
 {
-    public sealed class KafkaConsumerError
+    public class KafkaConsumerError
     {
+        public KafkaConsumerError(KafkaConsumerException ex)
+        {
+            Exception = ex;
+            KafkaMessage = ex?.MessageKafka;
+        }
+
         public KafkaConsumerError(Exception ex)
         {
             Exception = ex;

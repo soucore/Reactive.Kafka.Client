@@ -1,10 +1,5 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.Logging;
-using Reactive.Kafka.Exceptions;
-using Reactive.Kafka.Tests.Types;
-using System;
+﻿using Reactive.Kafka.Exceptions;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Reactive.Kafka.Tests
 {
@@ -25,7 +20,7 @@ namespace Reactive.Kafka.Tests
         public void OnBeforeSerializationEvent(string rawMessage, string expectedMessage)
         {
             // Arrange
-            var consumerWrapper = new ConsumerWrapper<string>(_loggerFactory, _consumer);
+            var consumerWrapper = new ConsumerWrapper<string>(_loggerFactory, _consumer, new());
             var beforeSerialization = "";
             var kafkaMessage = new Message<string, string> { Key = "", Value = rawMessage };
 
@@ -48,7 +43,7 @@ namespace Reactive.Kafka.Tests
         public void OnAfterSerializationEvent()
         {
             // Arrange
-            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
+            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
             var kafkaMessage = new Message<string, string> { Key = "", Value = @"{""Id"":1,""Name"":""Paul""}" };
             var expectedMessage = new MessageTest { Id = 1, Name = "John" };
 
@@ -74,36 +69,42 @@ namespace Reactive.Kafka.Tests
         public async Task UnsuccessfulMessageConversionFromStringToObject()
         {
             // Arrange
-            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
+            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
             var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
             // Act
             Task action()
             {
-                consumerWrapper.ConvertMessage(kafkaMessage);
+                (_, MessageTest message) = consumerWrapper.ConvertMessage(kafkaMessage);
+
+                consumerWrapper.UnsuccessfulConversion(kafkaMessage);
+
                 return Task.CompletedTask;
             }
 
             // Assert
-            await Assert.ThrowsAsync<KafkaConsumerException>(action);
+            await Assert.ThrowsAsync<KafkaSerializationException>(action);
         }
 
         [Fact]
         public async Task UnsuccessfulMessageConversionFromStringToInteger()
         {
             // Arrange
-            var consumerWrapper = new ConsumerWrapper<int>(_loggerFactory, _consumer);
+            var consumerWrapper = new ConsumerWrapper<int>(_loggerFactory, _consumer, new());
             var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
             // Act
             Task action()
             {
-                consumerWrapper.ConvertMessage(kafkaMessage);
+                (_, int message) = consumerWrapper.ConvertMessage(kafkaMessage);
+
+                consumerWrapper.UnsuccessfulConversion(kafkaMessage);
+
                 return Task.CompletedTask;
             }
 
             // Assert
-            await Assert.ThrowsAsync<KafkaConsumerException>(action);
+            await Assert.ThrowsAsync<KafkaSerializationException>(action);
         }
 
         [Theory]
@@ -112,7 +113,7 @@ namespace Reactive.Kafka.Tests
         public void OnConsumeEvent(string rawMessage, int expectedId, string expectedName)
         {
             // Arrange
-            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer);
+            var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
             var kafkaMessage = new Message<string, string> { Key = "", Value = rawMessage };
 
             int? id = null;
@@ -128,7 +129,9 @@ namespace Reactive.Kafka.Tests
                     return Task.CompletedTask;
                 };
 
-            consumerWrapper.ConvertMessage(kafkaMessage);
+            (_, MessageTest message) = consumerWrapper.ConvertMessage(kafkaMessage);
+
+            consumerWrapper.SuccessfulConversion("", message);
 
             // Assert
             Assert.NotNull(id);
