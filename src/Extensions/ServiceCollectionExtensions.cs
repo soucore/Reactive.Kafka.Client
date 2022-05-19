@@ -10,7 +10,7 @@
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
 
-            return services.AddReactiveKafkaConsumerPerPartition<T>(config =>
+            return services.AddReactiveKafkaConsumerPerPartition<T>((provider, config) =>
             {
                 config.Topic = topic;
                 config.ConsumerConfig.GroupId = groupId;
@@ -18,15 +18,14 @@
             });
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<KafkaConfiguration> setupAction)
+        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<IServiceProvider, KafkaConfiguration> setupAction)
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
             services.AddTransient(provider =>
             {
                 KafkaConfiguration config = new();
-                setupAction(config);
-
+                setupAction(provider, config);
                 config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
 
                 return config;
@@ -45,7 +44,7 @@
             ArgumentNullException.ThrowIfNull(bootstrapServer);
             ArgumentNullException.ThrowIfNull(topic);
 
-            return services.AddReactiveKafkaConsumerPerQuantity<T>(quantity, config =>
+            return services.AddReactiveKafkaConsumerPerQuantity<T>(quantity, (provider, config) =>
             {
                 config.Topic = topic;
                 config.ConsumerConfig.GroupId = groupId;
@@ -53,14 +52,14 @@
             });
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<KafkaConfiguration> setupAction)
+        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<IServiceProvider, KafkaConfiguration> setupAction)
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
             services.AddTransient(provider =>
             {
                 KafkaConfiguration config = new();
-                setupAction(config);
+                setupAction(provider, config);
 
                 config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
 
