@@ -19,6 +19,7 @@
         }
 
         public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<IServiceProvider, KafkaConfiguration> setupAction)
+            where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
@@ -26,6 +27,7 @@
             {
                 KafkaConfiguration config = new();
                 setupAction(provider, config);
+
                 config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
 
                 return config;
@@ -53,6 +55,7 @@
         }
 
         public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<IServiceProvider, KafkaConfiguration> setupAction)
+            where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
@@ -107,14 +110,14 @@
             return services;
         }
 
-        public static IServiceCollection AddReactiveKafkaHealthCheck(this IServiceCollection services, Action<KafkaHealthCheckConfiguration> setupAction = null)
+        public static IServiceCollection AddReactiveKafkaHealthCheck(this IServiceCollection services, Action<IServiceProvider, KafkaHealthCheckConfiguration> setupAction = null)
         {
             IServiceProvider provider = services.BuildServiceProvider();
 
             var config = (KafkaHealthCheckConfiguration)ActivatorUtilities
                 .CreateInstance(provider, typeof(KafkaHealthCheckConfiguration));
 
-            setupAction?.Invoke(config);
+            setupAction?.Invoke(provider, config);
 
             KafkaHealthCheck
                 .CreateInstance(provider, config, autoStart: true);
