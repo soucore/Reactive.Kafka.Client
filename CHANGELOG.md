@@ -1,4 +1,9 @@
-# 1.2.2 - (pre release)
+# 1.2.3
+### Enhancements
+
+- Added `IServiceProvider` as a parameter in the configuration.
+
+# 1.2.2
 ### Enhancements
 
 - Added exception class for specific handling of serialization errors.
