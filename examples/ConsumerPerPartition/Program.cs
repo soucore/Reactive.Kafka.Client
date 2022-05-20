@@ -6,7 +6,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddHostedService<Worker>();
         services.AddReactiveKafkaConsumerPerPartition<Consumer1>("localhost:9092", topic: "your-topic");
-        services.AddReactiveKafkaConsumerPerPartition<Consumer2>(config =>
+        services.AddReactiveKafkaConsumerPerPartition<Consumer2>((provider, config) =>
         {
             config.Topic = "your-another-topic";
             config.WaitNextConsume = false; // won't wait for the user and will consume in sequence
