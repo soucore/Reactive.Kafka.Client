@@ -10,7 +10,7 @@
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(bootstrapServer);
 
-            return services.AddReactiveKafkaConsumerPerPartition<T>(config =>
+            return services.AddReactiveKafkaConsumerPerPartition<T>((provider, config) =>
             {
                 config.Topic = topic;
                 config.ConsumerConfig.GroupId = groupId;
@@ -18,14 +18,15 @@
             });
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<KafkaConfiguration> setupAction)
+        public static IServiceCollection AddReactiveKafkaConsumerPerPartition<T>(this IServiceCollection services, Action<IServiceProvider, KafkaConfiguration> setupAction)
+            where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
             services.AddTransient(provider =>
             {
                 KafkaConfiguration config = new();
-                setupAction(config);
+                setupAction(provider, config);
 
                 config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
 
@@ -45,7 +46,7 @@
             ArgumentNullException.ThrowIfNull(bootstrapServer);
             ArgumentNullException.ThrowIfNull(topic);
 
-            return services.AddReactiveKafkaConsumerPerQuantity<T>(quantity, config =>
+            return services.AddReactiveKafkaConsumerPerQuantity<T>(quantity, (provider, config) =>
             {
                 config.Topic = topic;
                 config.ConsumerConfig.GroupId = groupId;
@@ -53,14 +54,15 @@
             });
         }
 
-        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<KafkaConfiguration> setupAction)
+        public static IServiceCollection AddReactiveKafkaConsumerPerQuantity<T>(this IServiceCollection services, int quantity, Action<IServiceProvider, KafkaConfiguration> setupAction)
+            where T : IKafkaConsumer
         {
             ArgumentNullException.ThrowIfNull(setupAction);
 
             services.AddTransient(provider =>
             {
                 KafkaConfiguration config = new();
-                setupAction(config);
+                setupAction(provider, config);
 
                 config.ConsumerConfig.GroupId ??= Guid.NewGuid().ToString();
 
@@ -108,14 +110,14 @@
             return services;
         }
 
-        public static IServiceCollection AddReactiveKafkaHealthCheck(this IServiceCollection services, Action<KafkaHealthCheckConfiguration> setupAction = null)
+        public static IServiceCollection AddReactiveKafkaHealthCheck(this IServiceCollection services, Action<IServiceProvider, KafkaHealthCheckConfiguration> setupAction = null)
         {
             IServiceProvider provider = services.BuildServiceProvider();
 
             var config = (KafkaHealthCheckConfiguration)ActivatorUtilities
                 .CreateInstance(provider, typeof(KafkaHealthCheckConfiguration));
 
-            setupAction?.Invoke(config);
+            setupAction?.Invoke(provider, config);
 
             KafkaHealthCheck
                 .CreateInstance(provider, config, autoStart: true);

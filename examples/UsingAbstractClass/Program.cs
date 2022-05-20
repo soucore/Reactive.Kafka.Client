@@ -8,7 +8,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<Worker>();
 
         services.AddReactiveKafkaConsumerPerQuantity<Consumer2>("localhost:9092", quantity: 2, topic: "your-another-topic");
-        services.AddReactiveKafkaConsumerPerQuantity<Consumer1>(quantity: 2, config =>
+        services.AddReactiveKafkaConsumerPerQuantity<Consumer1>(quantity: 2, (provider, config) =>
         {
             config.RespectObjectContract = true;
             config.Topic = "your-topic";

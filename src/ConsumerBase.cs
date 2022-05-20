@@ -12,13 +12,13 @@
 
         public virtual void OnProducerBuilder(ProducerConfig builder) { }
         public virtual void OnConsumerBuilder(ConsumerConfig builder) { }
+        public virtual void OnConsumerConfiguration(IConsumer<string, string> consumer) { }
         public virtual Task OnConsumeError(KafkaConsumerError consumerError, Commit commit)
         {
             return Task.CompletedTask;
         }
 
         #region Abstract Methods
-        public virtual void OnConsumerConfiguration(IConsumer<string, string> consumer) { }
         public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);
         #endregion
 
