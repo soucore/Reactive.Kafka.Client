@@ -68,7 +68,7 @@ public class MyConsumer : ConsumerBase<Message>
 |-------------------------|-------------------------------------------|-----------------------------------------------------------------------------------------|----------|
 | OnConsumerBuilder       |                                           | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
 | OnProducerBuilder       | Producer instance for message forwarding. | Called once, for each consumer instance, before confluent kafka producer built.         | No       |
-| OnConsumerConfiguration |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | Yes      |
+| OnConsumerConfiguration |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | No      |
 | OnBeforeSerialization   | Treatment of the message.                 | Called after message consume from topic and before `OnAfterSerialization`.              | No       |
 | OnAfterSerialization    | Enrichment of the message.                | Called after serialization process, may not occur if serialization fails.               | No       |
 | OnConsume               | Business logic.                           | Called immediately after `OnAfterSerialization` for each message.                       | Yes      |
@@ -127,6 +127,37 @@ livenessProbe:
 
 Check out our examples for a full demonstration. 😉
 
+### Simplest Kafka Consumer ever
+
+With few lines you have a Kafka Consumer taking advantage of each partition.
+
+```csharp
+// ConsumerExample.cs
+public class ConsumerExample : ConsumerBase<string>
+{
+    public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
+    {
+        Console.WriteLine(consumerMessage.Message);
+        return Task.CompletedTask;
+    }
+}
+```
+
+```csharp
+// Program.cs
+using Reactive.Kafka.Extensions;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+        services.AddReactiveKafkaConsumerPerPartition<ConsumerExample>("localhost:9092", "your-topic", "your-group");
+    })
+    .Build();
+
+await host.RunAsync();
+```
+
 ### AddReactiveKafkaConsumerPerPartition
 
 Creates a consumer per partition of a given topic.
@@ -150,11 +181,6 @@ public class ConsumerExample : ConsumerBase<Message>
         builder.Acks = Acks.None;
     }
 
-    public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-    {
-        consumer.Subscribe("your-topic");
-    }
-
     public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
     {       
         if (consumerMessage.Id == 0) {
@@ -174,8 +200,19 @@ using Reactive.Kafka.Extensions;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerPartition<ConsumerExample>("localhost:9092");
+        services.AddHostedService<Worker>();       
+        services.AddReactiveKafkaConsumerPerPartition<ConsumerExample>((provider, config) => {
+            // json messages that don't agree with the object will throw an exception.
+            // You can catch and handle it in the OnConsumeError method.
+            config.RespectObjectContract = true; 
+            
+            config.Topic = "your-topic";
+            config.ConsumerConfig.GroupId = "your-group";
+            config.ConsumerConfig.BootstrapServers = "localhost:9092";
+            config.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
+            config.ConsumerConfig.AutoCommitIntervalMs = 0;
+            config.ConsumerConfig.EnableAutoCommit = false;            
+        });
     })
     .Build();
 
@@ -189,12 +226,7 @@ Creates a specified number of consumer in a given topic.
 ```csharp
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<string>
-{
-    public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-    {
-        consumer.Subscribe("your-topic");
-    }
-    
+{   
     public override string OnBeforeSerialization(string rawMessage)
     {
         string newMessage = Regex.Replace(rawMessage, @"\D", "");
@@ -217,7 +249,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerQuantity<ConsumerExample>("localhost:9092", quantity: 2);
+        services.AddReactiveKafkaConsumerPerQuantity<ConsumerExample>("localhost:9092", quantity: 2, "your-topic");
     })
     .Build();
 
