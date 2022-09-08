@@ -5,7 +5,7 @@ using Reactive.Kafka.Interfaces;
 
 namespace UsingInterfaces.Consumers
 {
-    public class Consumer1 : IKafkaConsumer<string>, IKafkaConsumerBuilder, IKafkaConsumerError, IKafkaConsumerConfiguration
+    public class Consumer1 : IKafkaConsumer<string>, IKafkaConsumerError, IKafkaConsumerConfiguration
     {
         private readonly ILogger<Consumer1> _logger;
 
@@ -26,15 +26,10 @@ namespace UsingInterfaces.Consumers
             return Task.CompletedTask;
         }
 
-        public void OnConsumerBuilder(ConsumerConfig builder)
+        public void OnConsumerConfiguration(ConsumerConfig configuration)
         {
-            builder.GroupId = "your-group";
-            builder.AutoOffsetReset = AutoOffsetReset.Latest;
-        }
-
-        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("your-topic");
+            configuration.GroupId = "your-group";
+            configuration.AutoOffsetReset = AutoOffsetReset.Latest;
         }
     }
 }

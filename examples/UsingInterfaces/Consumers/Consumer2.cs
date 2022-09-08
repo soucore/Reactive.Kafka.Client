@@ -1,10 +1,9 @@
-﻿using Confluent.Kafka;
-using Reactive.Kafka;
+﻿using Reactive.Kafka;
 using Reactive.Kafka.Interfaces;
 
 namespace UsingInterfaces.Consumers
 {
-    public class Consumer2 : IKafkaConsumer<string>, IKafkaConsumerConfiguration
+    public class Consumer2 : IKafkaConsumer<string>
     {
         private readonly ILogger<Consumer2> _logger;
 
@@ -17,11 +16,6 @@ namespace UsingInterfaces.Consumers
         {
             _logger.LogInformation("{Message}", consumerMessage.Message);
             return Task.CompletedTask;
-        }
-
-        public void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("your-another-topic");
         }
     }
 }

@@ -1,9 +1,8 @@
-﻿namespace Reactive.Kafka.Interfaces
+﻿namespace Reactive.Kafka.Interfaces;
+
+public interface IKafkaAdmin
 {
-    public interface IKafkaAdmin
-    {
-        Metadata GetMetadata();
-        Dictionary<string, int> PartitionsDiscovery();
-        Dictionary<string, int> PartitionsDiscovery(Metadata metadata);
-    }
+    TopicMetadata GetTopicMetadata(IAdminClient adminClient, string topic);
+    int Partitions(KafkaConfiguration configuration);
+    Metadata GetMetadata(IAdminClient adminClient);
 }
