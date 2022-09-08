@@ -37,8 +37,6 @@ internal static class KafkaBuilder
             {
                 var producerBinding = new ProducerBinding(consumerObj, producerWrapper);
 
-                Console.WriteLine("Consumer: {0}, Producer: {1}", consumerObj.GetHashCode(), producerWrapper.Producer.GetHashCode());
-
                 producerBinding.BindOnProduce();
                 producerBinding.BindOnProduceAsync();
             }
@@ -76,8 +74,6 @@ internal static class KafkaBuilder
             if (producerWrapper is not null)
             {
                 var producerBinding = new ProducerBinding(consumerObj, producerWrapper);
-
-                Console.WriteLine("Consumer: {0}, Producer: {1}", consumerObj.GetHashCode(), producerWrapper.Producer.GetHashCode());
 
                 producerBinding.BindOnProduce();
                 producerBinding.BindOnProduceAsync();

@@ -16,19 +16,19 @@
 
         public void BindOnBeforeSerialization()
         {
-            if (source is IKafkaSerialization)
+            if (target is IKafkaSerialization)
                 Bind(onBeforeSerialization, onBeforeSerialization);
         }
 
         public void BindOnAfterSerialization()
         {
-            if (source is IKafkaSerialization)
+            if (target is IKafkaSerialization)
                 Bind(onAfterSerialization, onAfterSerialization);
         }
 
         public void BindOnConsumeError()
         {
-            if (source is IKafkaConsumerError)
+            if (target is IKafkaConsumerError)
                 Bind(onConsumeError, onConsumeError);
         }
     }
