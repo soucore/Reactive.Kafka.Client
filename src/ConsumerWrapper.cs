@@ -17,7 +17,6 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     #endregion
 
     private readonly ILogger _logger;
-    private Func<Message<string, string>, T> ConvertFunc = null;
 
     public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
@@ -95,7 +94,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         if (OnBeforeSerialization is not null)
             kafkaMessage.Value = OnBeforeSerialization.Invoke(kafkaMessage.Value);
 
-        (bool, T) ReturnMessage(T message)
+        if (Convert.TrySerializeType(kafkaMessage.Value, Configuration.RespectObjectContract, out T message) || Convert.TryChangeType(kafkaMessage.Value, out message))
         {
             if (OnAfterSerialization is not null)
                 message = OnAfterSerialization.Invoke(message);
@@ -103,39 +102,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
             return (true, message);
         }
 
-        T message;
-
-        if (ConvertFunc is not null)
-        {
-            message = ConvertFunc.Invoke(kafkaMessage);
-            return ReturnMessage(message);
-        }
-
-        if (Convert.TrySerializeType(kafkaMessage.Value, Configuration.RespectObjectContract, out message))
-        {
-            ConvertFunc = SerializeType;
-            return ReturnMessage(message);
-        }
-
-        if (Convert.TryChangeType(kafkaMessage.Value, out message))
-        {
-            ConvertFunc = ChangeType;
-            return ReturnMessage(message);
-        }
-
         return (false, default(T));
-    }
-
-    public T SerializeType(Message<string, string> kafkaMessage)
-    {
-        Convert.TrySerializeType(kafkaMessage.Value, Configuration.RespectObjectContract, out T message);
-        return message;
-    }
-
-    public T ChangeType(Message<string, string> kafkaMessage)
-    {
-        Convert.TryChangeType(kafkaMessage.Value, out T message);
-        return message;
     }
 
     public void SuccessfulConversion(string key, T message)
