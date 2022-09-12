@@ -1,19 +1,22 @@
+using Confluent.Kafka;
 using ConsumerPerPartition;
 using Reactive.Kafka.Extensions;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerPartition<Consumer1>("localhost:9092", topic: "your-topic");
-        services.AddReactiveKafkaConsumerPerPartition<Consumer2>((provider, config) =>
+        services.AddReactiveKafka((provider, configurator) =>
         {
-            config.Topic = "your-another-topic";
-            config.WaitNextConsume = false; // won't wait for the user and will consume in sequence
-            config.ConsumerConfig.GroupId = "your-another-group";
-            config.ConsumerConfig.BootstrapServers = "localhost:9092";
+            configurator.AddConsumerPerPartition<Consumer2, Message>("localhost:9092", "your-topic", "your-group");
+            configurator.AddConsumerPerPartition<Consumer1, string>("localhost:9092", (provider, configuration) =>
+            {
+                configuration.Topic = "your-another-topic";
+                configuration.ConsumerConfig.GroupId = "your-another-group";
+                configuration.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
+            });
         });
     })
     .Build();
 
+await host.RunConsumersAsync();
 await host.RunAsync();

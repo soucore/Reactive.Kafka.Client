@@ -17,13 +17,13 @@ Features:
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
 ```
-Install-Package Reactive.Kafka.Client -Version 1.2.3
+Install-Package Reactive.Kafka.Client -Version 2.0.2
 ```
 
 To add a reference to a dotnet core project, execute the following at the command line:
 
 ```
-dotnet add package -v 1.2.3 Reactive.Kafka.Client
+dotnet add package -v 2.0.2 Reactive.Kafka.Client
 ```
 
 ## Message lifecycle
@@ -37,9 +37,9 @@ Respond to events in the lifecycle of a message by overriding one or more of the
 ```csharp
 public class MyConsumer : ConsumerBase<Message>
 {
-    public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
+    public override void OnConsumerConfiguration(ConsumerConfig configuration)
     {
-        // your consumer settings here.
+        // your consumer configuration here.
     }
 
     public override string OnBeforeSerialization(string rawMessage)
@@ -66,9 +66,9 @@ public class MyConsumer : ConsumerBase<Message>
 
 | Hook method             | Purpose                                   | Timing                                                                                  | Required |
 |-------------------------|-------------------------------------------|-----------------------------------------------------------------------------------------|----------|
-| OnConsumerBuilder       |                                           | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
-| OnProducerBuilder       | Producer instance for message forwarding. | Called once, for each consumer instance, before confluent kafka producer built.         | No       |
-| OnConsumerConfiguration |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | No      |
+| OnConsumerConfiguration       |                                           | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
+| OnProducerConfiguration       | Producer instance for message forwarding. | Called once, for each consumer instance, before confluent kafka producer built.         | No       |
+| OnConsumerBuilder |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | No      |
 | OnBeforeSerialization   | Treatment of the message.                 | Called after message consume from topic and before `OnAfterSerialization`.              | No       |
 | OnAfterSerialization    | Enrichment of the message.                | Called after serialization process, may not occur if serialization fails.               | No       |
 | OnConsume               | Business logic.                           | Called immediately after `OnAfterSerialization` for each message.                       | Yes      |
@@ -76,49 +76,6 @@ public class MyConsumer : ConsumerBase<Message>
 
 ## Concept
 ![Concept Image](docs/concept.png)
-
-## Health Check
-
-Health checks are a way to check the health of consumers based on the time that has elapsed since the last message consumed. Without any health checks specified, the application has no way of knowing whether consumers are actually active or not.
-
-```csharp
-// Program.cs
-using Reactive.Kafka.Extensions;
-
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<Worker>();
-        
-        services
-            .AddReactiveKafkaConsumerPerPartition<ConsumerExample>("localhost:9092")
-            .AddReactiveKafkaHealthCheck(config => {
-                // interval between checks
-                config.IntervalSeconds = 10;
-                
-                // time for a consumer to be considered unhealthy
-                config.ReferenceTimeMinutes = 10;
-                
-                // number of unreachable consumers to be considered unhealthy (negative numbers for all) 
-                config.NumberOfObservedConsumers = 1; 
-            });
-    })
-    .Build();
-
-await host.RunAsync();
-```
-
-A file will be created in the project root called `healthy.txt` or `unhealthy.txt`. This way, in kubernetes environments you can leverage to provide liveness probes to detect and remedy fail situations.
-
-```yaml
-livenessProbe:
-  exec:
-    command:
-    - cat
-    - healthy.txt
-  initialDelaySeconds: 5
-  periodSeconds: 5
-```
 
 ## Usage
 
@@ -150,11 +107,13 @@ using Reactive.Kafka.Extensions;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerPartition<ConsumerExample>("localhost:9092", "your-topic", "your-group");
+        services.AddReactiveKafka((provider, configurator) => {
+            configurator.AddConsumerPerPartition<ConsumerExample, string>("localhost:9092", "your-topic", "your-group");
+        });
     })
     .Build();
 
+await host.RunConsumersAsync();
 await host.RunAsync();
 ```
 
@@ -175,16 +134,16 @@ public class Message
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<Message>
 {
-    public override void OnProducerBuilder(ProducerConfig builder)
+    public override void OnProducerConfiguration(ProducerConfig configuration)
     {
-        builder.BootstrapServers = "localhost:9092";
-        builder.Acks = Acks.None;
+        configuration.BootstrapServers = "localhost:9092";
+        configuration.Acks = Acks.None;
     }
 
     public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
     {       
         if (consumerMessage.Id == 0) {
-            await ProducerAsync("DeadLetterTopic", consumerMessage.Message);
+            await ProducerAsync("DeadLetterTopic", consumerMessage.Message.ToString());
             return;
         }
         
@@ -200,22 +159,23 @@ using Reactive.Kafka.Extensions;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Worker>();       
-        services.AddReactiveKafkaConsumerPerPartition<ConsumerExample>((provider, config) => {
-            // json messages that don't agree with the object will throw an exception.
-            // You can catch and handle it in the OnConsumeError method.
-            config.RespectObjectContract = true; 
-            
-            config.Topic = "your-topic";
-            config.ConsumerConfig.GroupId = "your-group";
-            config.ConsumerConfig.BootstrapServers = "localhost:9092";
-            config.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
-            config.ConsumerConfig.AutoCommitIntervalMs = 0;
-            config.ConsumerConfig.EnableAutoCommit = false;            
+        services.AddReactiveKafka((provider, configurator) => {
+            configurator.AddConsumerPerPartition<ConsumerExample, Message>("localhost:9092", (provider, config) => {
+                // json messages that don't agree with the object will throw an exception.
+                // You can catch and handle it in the OnConsumeError method.
+                config.RespectObjectContract = true; 
+
+                config.Topic = "your-topic";
+                config.ConsumerConfig.GroupId = "your-group";
+                config.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
+                config.ConsumerConfig.AutoCommitIntervalMs = 0;
+                config.ConsumerConfig.EnableAutoCommit = false;               
+            });
         });
     })
     .Build();
 
+await host.RunConsumersAsync();
 await host.RunAsync();
 ```
 
@@ -248,76 +208,12 @@ using Reactive.Kafka.Extensions;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumerPerQuantity<ConsumerExample>("localhost:9092", quantity: 2, "your-topic");
+        services.AddReactiveKafka((provider, configurator) => {
+            configurator.AddConsumerPerQuantity<ConsumerExample, string>("localhost:9092", quantity: 2, "your-topic", "your-group");
+        });
     })
     .Build();
 
-await host.RunAsync();
-```
-
-### AddReactiveKafkaConsumer
-
-Looks for consumers in the calling assembly. You have more control over consumers and what topic they listen to.
-
-This method doesn't create consumers per partition, for example, if you want three consumers on a topic with three partitions, you need to create three consumers listening to the same topic with the same group id.
-
-```csharp
-// Consumer1.cs
-public class Consumer1 : ConsumerBase<string>
-{
-    public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-    {
-        consumer.Subscribe("your-topic");
-    }
-
-    public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
-    {
-        Console.WriteLine(consumerMessage.Message);
-        return Task.CompletedTask;
-    }
-}
-```
-
-Consumer1 will listen for the `your-topic` topic with a random generated group id.
-
-```csharp
-// Consumer2.cs
-public class Consumer2 : ConsumerBase<int>
-{
-    public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-    {
-        consumer.Subscribe("your-another-topic");
-    }
-
-    public override void OnConsumerBuilder(ConsumerConfig builder)
-    {
-        builder.GroupId = "your-group";
-        builder.AutoCommitIntervalMs = 0;
-        builder.EnableAutoCommit = false;
-    }
-
-    public override Task OnConsume(ConsumerMessage<int> consumerMessage, Commit commit)
-    {
-        Console.WriteLine(consumerMessage.Message);
-        return Task.CompletedTask;
-    }
-}
-```
-
-Consumer2 will listen for the `your-another-topic` topic with `your-group` as the group id and with auto commit disabled. 
-
-```csharp
-// Program.cs
-using Reactive.Kafka.Extensions;
-
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<Worker>();
-        services.AddReactiveKafkaConsumer("localhost:9092");
-    })
-    .Build();
-
+await host.RunConsumersAsync();
 await host.RunAsync();
 ```

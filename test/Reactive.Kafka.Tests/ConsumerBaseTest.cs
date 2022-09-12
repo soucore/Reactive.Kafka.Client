@@ -1,188 +1,184 @@
-﻿using Confluent.Kafka;
-using Reactive.Kafka.Tests.Types;
-using System.Threading.Tasks;
-using Xunit;
+﻿using System.Threading.Tasks;
 
-namespace Reactive.Kafka.Tests
+namespace Reactive.Kafka.Tests;
+
+public class ConsumerBaseTest
 {
-    public class ConsumerBaseTest
+    [Fact]
+    public void SyncShortcutProduceEvent()
     {
-        [Fact]
-        public void SyncShortcutProduceEvent()
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
+
+        string expectedTopic = "";
+        string expectedMessage = "";
+
+        consumerBase.OnProduce += (topic, message) =>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            expectedTopic = topic;
+            expectedMessage = message.Value;
+        };
 
-            string expectedTopic = "";
-            string expectedMessage = "";
+        // Act
+        consumerBase.Produce("topic1", "test message.");
 
-            consumerBase.OnProduce += (topic, message) =>
-            {
-                expectedTopic = topic;
-                expectedMessage = message.Value;
-            };
+        // Assert
+        Assert.NotEmpty(expectedTopic);
+        Assert.NotEmpty(expectedMessage);
+        Assert.Equal("topic1", expectedTopic);
+        Assert.Equal("test message.", expectedMessage);
+    }
 
-            // Act
-            consumerBase.Produce("topic1", "test message.");
+    [Fact]
+    public async Task AsyncShortcutProduceEvent()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
 
-            // Assert
-            Assert.NotEmpty(expectedTopic);
-            Assert.NotEmpty(expectedMessage);
-            Assert.Equal("topic1", expectedTopic);
-            Assert.Equal("test message.", expectedMessage);
-        }
+        string expectedTopic = "";
+        string expectedMessage = "";
 
-        [Fact]
-        public async Task AsyncShortcutProduceEvent()
+        consumerBase.OnProduceAsync += (topic, message) =>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            expectedTopic = topic;
+            expectedMessage = message.Value;
 
-            string expectedTopic = "";
-            string expectedMessage = "";
+            return Task.FromResult(new DeliveryResult<string, string>());
+        };
 
-            consumerBase.OnProduceAsync += (topic, message) =>
-            {
-                expectedTopic = topic;
-                expectedMessage = message.Value;
+        // Act
+        await consumerBase.ProduceAsync("topic1", "test message.");
 
-                return Task.FromResult(new DeliveryResult<string, string>());
-            };
+        // Assert
+        Assert.NotEmpty(expectedTopic);
+        Assert.NotEmpty(expectedMessage);
+        Assert.Equal("topic1", expectedTopic);
+        Assert.Equal("test message.", expectedMessage);
+    }
 
-            // Act
-            await consumerBase.ProduceAsync("topic1", "test message.");
+    [Fact]
+    public void SyncProduceEvent()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
 
-            // Assert
-            Assert.NotEmpty(expectedTopic);
-            Assert.NotEmpty(expectedMessage);
-            Assert.Equal("topic1", expectedTopic);
-            Assert.Equal("test message.", expectedMessage);
-        }
+        string expectedTopic = "";
+        string expectedMessage = "";
 
-        [Fact]
-        public void SyncProduceEvent()
+        consumerBase.OnProduce += (topic, message) =>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            expectedTopic = topic;
+            expectedMessage = message.Value;
+        };
 
-            string expectedTopic = "";
-            string expectedMessage = "";
-
-            consumerBase.OnProduce += (topic, message) =>
-            {
-                expectedTopic = topic;
-                expectedMessage = message.Value;
-            };
-
-            // Act
-            consumerBase.Produce("topic1", new Message<string, string>
-            {
-                Value = "test message."
-            });
-
-            // Assert
-            Assert.NotEmpty(expectedTopic);
-            Assert.NotEmpty(expectedMessage);
-            Assert.Equal("topic1", expectedTopic);
-            Assert.Equal("test message.", expectedMessage);
-        }
-
-        [Fact]
-        public async Task AsyncProduceEvent()
+        // Act
+        consumerBase.Produce("topic1", new Message<string, string>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            Value = "test message."
+        });
 
-            string expectedTopic = "";
-            string expectedMessage = "";
+        // Assert
+        Assert.NotEmpty(expectedTopic);
+        Assert.NotEmpty(expectedMessage);
+        Assert.Equal("topic1", expectedTopic);
+        Assert.Equal("test message.", expectedMessage);
+    }
 
-            consumerBase.OnProduceAsync += (topic, message) =>
-            {
-                expectedTopic = topic;
-                expectedMessage = message.Value;
+    [Fact]
+    public async Task AsyncProduceEvent()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
 
-                return Task.FromResult(new DeliveryResult<string, string>());
-            };
+        string expectedTopic = "";
+        string expectedMessage = "";
 
-            // Act
-            await consumerBase.ProduceAsync("topic1", new Message<string, string>
-            {
-                Value = "test message."
-            });
-
-            // Assert
-            Assert.NotEmpty(expectedTopic);
-            Assert.NotEmpty(expectedMessage);
-            Assert.Equal("topic1", expectedTopic);
-            Assert.Equal("test message.", expectedMessage);
-        }
-
-        [Fact]
-        public void OnBeforeSerializationMethod()
+        consumerBase.OnProduceAsync += (topic, message) =>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            expectedTopic = topic;
+            expectedMessage = message.Value;
 
-            string expectedMessage = "raw message.";
+            return Task.FromResult(new DeliveryResult<string, string>());
+        };
 
-            // Act
-            string returnMessage = consumerBase
-                .OnBeforeSerialization("raw message.");
-
-            // Assert
-            Assert.Equal(expectedMessage, returnMessage);
-        }
-
-        [Fact]
-        public void OnAfterSerializationMethod()
+        // Act
+        await consumerBase.ProduceAsync("topic1", new Message<string, string>
         {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer2();
+            Value = "test message."
+        });
 
-            string expectedMessage = "message.";
+        // Assert
+        Assert.NotEmpty(expectedTopic);
+        Assert.NotEmpty(expectedMessage);
+        Assert.Equal("topic1", expectedTopic);
+        Assert.Equal("test message.", expectedMessage);
+    }
 
-            // Act
-            string returnMessage = consumerBase
-                .OnAfterSerialization("message.");
+    [Fact]
+    public void OnBeforeSerializationMethod()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
 
-            // Assert
-            Assert.Equal(expectedMessage, returnMessage);
-        }
+        string expectedMessage = "raw message.";
 
-        [Fact]
-        public void OnConsumerBuilderMethod()
-        {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer3();
-            ConsumerConfig config = new();
+        // Act
+        string returnMessage = consumerBase
+            .OnBeforeSerialization("raw message.");
 
-            string expectedBootstrapServer = "localhost:9092";
-            string expectedGroup = "Group";
+        // Assert
+        Assert.Equal(expectedMessage, returnMessage);
+    }
 
-            // Act
-            consumerBase.OnConsumerBuilder(config);
+    [Fact]
+    public void OnAfterSerializationMethod()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer2();
 
-            // Assert
-            Assert.Equal(expectedBootstrapServer, config.BootstrapServers);
-            Assert.Equal(expectedGroup, config.GroupId);
-        }
+        string expectedMessage = "message.";
 
-        [Fact]
-        public void OnProducerBuilderMethod()
-        {
-            // Arrange
-            ConsumerBase<string> consumerBase = new Consumer3();
-            ProducerConfig config = new();
+        // Act
+        string returnMessage = consumerBase
+            .OnAfterSerialization("message.");
 
-            string expectedBootstrapServer = "localhost:9092";
-            Acks expectedAckMode = Acks.None;
+        // Assert
+        Assert.Equal(expectedMessage, returnMessage);
+    }
 
-            // Act
-            consumerBase.OnProducerBuilder(config);
+    [Fact]
+    public void OnConsumerBuilderMethod()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer3();
+        ConsumerConfig config = new();
 
-            // Assert
-            Assert.Equal(expectedBootstrapServer, config.BootstrapServers);
-            Assert.Equal(expectedAckMode, config.Acks);
-        }
+        string expectedBootstrapServer = "localhost:9092";
+        string expectedGroup = "Group";
+
+        // Act
+        consumerBase.OnConsumerConfiguration(config);
+
+        // Assert
+        Assert.Equal(expectedBootstrapServer, config.BootstrapServers);
+        Assert.Equal(expectedGroup, config.GroupId);
+    }
+
+    [Fact]
+    public void OnProducerBuilderMethod()
+    {
+        // Arrange
+        ConsumerBase<string> consumerBase = new Consumer3();
+        ProducerConfig config = new();
+
+        string expectedBootstrapServer = "localhost:9092";
+        Acks expectedAckMode = Acks.None;
+
+        // Act
+        consumerBase.OnProducerConfiguration(config);
+
+        // Assert
+        Assert.Equal(expectedBootstrapServer, config.BootstrapServers);
+        Assert.Equal(expectedAckMode, config.Acks);
     }
 }

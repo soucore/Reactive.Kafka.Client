@@ -1,11 +1,10 @@
-﻿namespace Reactive.Kafka.Interfaces
+﻿namespace Reactive.Kafka.Interfaces;
+
+public interface IKafkaConsumerConfiguration
 {
-    public interface IKafkaConsumerConfiguration
-    {
-        /// <summary>
-        /// Consumer configuration.
-        /// </summary>
-        /// <param name="consumer">Consumer instance</param>
-        void OnConsumerConfiguration(IConsumer<string, string> consumer);
-    }
+    /// <summary>
+    /// Consumer configuration.
+    /// </summary>
+    /// <param name="configuration">Configuration object</param>
+    void OnConsumerConfiguration(ConsumerConfig configuration);
 }

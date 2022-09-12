@@ -2,7 +2,7 @@
 
 namespace ConsumerPerPartition
 {
-    public class Consumer1 : ConsumerBase<Message>
+    public class Consumer1 : ConsumerBase<string>
     {
         private readonly ILogger<Consumer1> _logger;
 
@@ -11,7 +11,7 @@ namespace ConsumerPerPartition
             _logger = logger;
         }
 
-        public override Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
+        public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
         {
             _logger.LogInformation("{Message}", consumerMessage.Message);
             return Task.CompletedTask;

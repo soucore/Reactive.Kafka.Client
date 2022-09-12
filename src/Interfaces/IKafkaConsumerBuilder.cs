@@ -3,9 +3,9 @@
     public interface IKafkaConsumerBuilder
     {
         /// <summary>
-        /// Kafka consumer configuration.
+        /// Consumer builder.
         /// </summary>
-        /// <param name="builder">Configuration object</param>
-        void OnConsumerBuilder(ConsumerConfig builder);
+        /// <param name="builder">Consumer builder instance</param>
+        void OnConsumerBuilder(ConsumerBuilder<string, string> builder);
     }
 }

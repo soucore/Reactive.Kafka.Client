@@ -1,7 +1,5 @@
-﻿using System;
-using Reactive.Kafka.Errors;
+﻿using Reactive.Kafka.Errors;
 using Reactive.Kafka.Exceptions;
-using Xunit;
 
 namespace Reactive.Kafka.Tests;
 
@@ -21,7 +19,7 @@ public class KafkaConsumerErrorTest
         Assert.NotNull(consumerError.Exception);
         Assert.True(consumerError.KafkaMessage == expected);
     }
-    
+
     [Fact]
     public void PlacesExceptionAndChecksPropertyValueInvalid()
     {
@@ -36,7 +34,7 @@ public class KafkaConsumerErrorTest
         Assert.NotNull(consumerError.Exception);
         Assert.False(consumerError.KafkaMessage == expected);
     }
-    
+
     [Fact]
     public void PlacesCustomExceptionAndChecksPropertyValueValid()
     {
@@ -53,7 +51,7 @@ public class KafkaConsumerErrorTest
         Assert.True(consumerError.Exception.Message == expectedMessageError);
         Assert.True(consumerError.KafkaMessage == expectedMessageKafka);
     }
-    
+
     [Fact]
     public void PlacesCustomExceptionAndChecksPropertyValueInValid()
     {
@@ -71,14 +69,14 @@ public class KafkaConsumerErrorTest
         Assert.True(consumerError.Exception.Message == "Exception generated Error");
         Assert.False(consumerError.KafkaMessage == "Message Kafka not serialize");
     }
-    
+
     [Fact]
     public void ParamExceptionIsNull()
     {
         // Arrange
         Exception value = null;
         string expected = null;
-        
+
         // Act
         var consumerError = new KafkaConsumerError(value);
 

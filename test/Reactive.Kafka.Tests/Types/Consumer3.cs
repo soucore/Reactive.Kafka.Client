@@ -1,44 +1,33 @@
-﻿using Confluent.Kafka;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace Reactive.Kafka.Tests.Types
+namespace Reactive.Kafka.Tests.Types;
+
+public class Consumer3 : ConsumerBase<string>
 {
-    public class Consumer3 : ConsumerBase<string>
+    public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
     {
-        public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
-        {
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
+    }
 
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer)
-        {
-            consumer.Subscribe("topic1");
-        }
+    public override void OnConsumerConfiguration(ConsumerConfig configuration)
+    {
+        configuration.BootstrapServers = "localhost:9092";
+        configuration.GroupId = "Group";
+    }
 
-        public override void OnConsumerBuilder(ConsumerConfig builder)
-        {
-            builder.BootstrapServers = "localhost:9092";
-            builder.GroupId = "Group";
+    public override void OnProducerConfiguration(ProducerConfig configuration)
+    {
+        configuration.BootstrapServers = "localhost:9092";
+        configuration.Acks = Acks.None;
+    }
 
-            base.OnConsumerBuilder(builder);
-        }
+    public override string OnAfterSerialization(string message)
+    {
+        return base.OnAfterSerialization(message);
+    }
 
-        public override void OnProducerBuilder(ProducerConfig builder)
-        {
-            builder.BootstrapServers = "localhost:9092";
-            builder.Acks = Acks.None;
-
-            base.OnProducerBuilder(builder);
-        }
-
-        public override string OnAfterSerialization(string message)
-        {
-            return base.OnAfterSerialization(message);
-        }
-
-        public override string OnBeforeSerialization(string rawMessage)
-        {
-            return base.OnBeforeSerialization(rawMessage);
-        }
+    public override string OnBeforeSerialization(string rawMessage)
+    {
+        return base.OnBeforeSerialization(rawMessage);
     }
 }

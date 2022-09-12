@@ -1,71 +1,50 @@
-﻿namespace Reactive.Kafka
+﻿namespace Reactive.Kafka;
+
+public sealed class KafkaAdmin : IKafkaAdmin
 {
-    public class KafkaAdmin : IKafkaAdmin
+    private readonly ILogger _logger;
+
+    public KafkaAdmin(ILoggerFactory loggerFactory)
     {
-        private readonly ILogger _logger;
+        _logger = loggerFactory.CreateLogger("Reactive.Kafka.Admin");
+    }
 
-        public KafkaAdmin(ILoggerFactory loggerFactory)
+    public int Partitions(KafkaConfiguration configuration)
+    {
+        using var adminClient = new AdminClientBuilder(new AdminClientConfig
         {
-            _logger = loggerFactory.CreateLogger("Reactive.Kafka.Admin");
+            BootstrapServers = configuration.ConsumerConfig.BootstrapServers
+        }).Build();
+
+        var topicMetadata = GetTopicMetadata(adminClient, configuration.Topic);
+        var topicPartitions = topicMetadata?.Partitions.Count ?? 0;
+
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Topic {Topic} has {Partitions} partitions.", configuration.Topic, topicPartitions);
+
+        return topicPartitions;
+    }
+
+    public TopicMetadata GetTopicMetadata(IAdminClient adminClient, string topic)
+    {
+        return GetMetadata(adminClient)?.Topics.FirstOrDefault(tm => tm.Topic == topic);
+    }
+
+    public Metadata GetMetadata(IAdminClient adminClient)
+    {
+        try
+        {
+            return adminClient.GetMetadata(TimeSpan.FromSeconds(20));
         }
-
-        public IAdminClient AdminClient { get; set; }
-
-        public Metadata GetMetadata()
+        catch (Exception ex)
         {
-            try
+            if (_logger.IsEnabled(LogLevel.Error))
             {
-                return AdminClient.GetMetadata(TimeSpan.FromSeconds(20));
-            }
-            catch (Exception ex)
-            {
-                if (_logger.IsEnabled(LogLevel.Error))
-                {
-                    _logger.LogError("Unable to obtain kafka metadata from admin.");
-                    _logger.LogError("{ErrorMessage}", ex.Message);
-                }
-
-                return default;
-            }
-        }
-
-        public Dictionary<string, int> PartitionsDiscovery()
-        {
-            Metadata metadata = GetMetadata();
-            return PartitionsDiscovery(metadata);
-        }
-
-        public Dictionary<string, int> PartitionsDiscovery(Metadata metadata)
-        {
-            Dictionary<string, int> dict = new();
-
-            metadata?.Topics.ForEach(topicMetadata =>
-            {
-                if (dict.ContainsKey(topicMetadata.Topic))
-                    dict[topicMetadata.Topic] = topicMetadata.Partitions.Count;
-                else
-                    dict.Add(topicMetadata.Topic, topicMetadata.Partitions.Count);
-            });
-
-            return dict;
-        }
-
-        public static KafkaAdmin CreateInstance(IServiceProvider provider, bool isTest)
-        {
-            var kafkaConfiguration = provider.GetRequiredService<KafkaConfiguration>();
-
-            var kafkaAdmin = (KafkaAdmin)ActivatorUtilities
-                .CreateInstance(provider, typeof(KafkaAdmin), Array.Empty<object>());
-
-            if (!isTest)
-            {
-                kafkaAdmin.AdminClient = new AdminClientBuilder(new AdminClientConfig
-                {
-                    BootstrapServers = kafkaConfiguration.ConsumerConfig.BootstrapServers
-                }).Build();
+                _logger.LogError("Unable to obtain kafka metadata from admin.");
+                _logger.LogError("{ErrorMessage}", ex.Message);
             }
 
-            return kafkaAdmin;
+            return default;
         }
     }
 }

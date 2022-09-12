@@ -1,15 +1,11 @@
-﻿using Confluent.Kafka;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace Reactive.Kafka.Tests.Types
+namespace Reactive.Kafka.Tests.Types;
+
+public class Consumer1 : ConsumerBase<string>
 {
-    public class Consumer1 : ConsumerBase<string>
+    public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
     {
-        public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
-        {
-            return Task.CompletedTask;
-        }
-
-        public override void OnConsumerConfiguration(IConsumer<string, string> consumer) { }
+        return Task.CompletedTask;
     }
 }

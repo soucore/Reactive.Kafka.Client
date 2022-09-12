@@ -1,71 +1,66 @@
-﻿using Confluent.Kafka;
-using Microsoft.Extensions.Logging;
-using Moq;
-using System.Threading.Tasks;
-using Xunit;
+﻿using System.Threading.Tasks;
 
-namespace Reactive.Kafka.Tests
+namespace Reactive.Kafka.Tests;
+
+public class ProducerTest
 {
-    public class ProducerTest
+    private readonly IProducer<string, string> _producer
+        = new ProducerBuilder<string, string>(new ProducerConfig
+        {
+            BootstrapServers = "localhost:9092"
+        }).Build();
+
+    private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
+
+    [Fact]
+    public void InstantiateProducerWrapperCorrectly()
     {
-        private readonly IProducer<string, string> _producer
-            = new ProducerBuilder<string, string>(new ProducerConfig
-            {
-                BootstrapServers = "localhost:9092"
-            }).Build();
+        // Arrange
+        var producerWrapper = new ProducerWrapper(_loggerFactory, _producer);
 
-        private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
+        // Assert
+        Assert.NotNull(producerWrapper.Producer);
+        Assert.IsAssignableFrom<IProducer<string, string>>(producerWrapper.Producer);
+    }
 
-        [Fact]
-        public void InstantiateProducerWrapperCorrectly()
-        {
-            // Arrange
-            var producerWrapper = new ProducerWrapper(_loggerFactory, _producer);
+    [Fact]
+    public void EnsureOnProduceMethodCalledOnce()
+    {
+        // Arrange
+        var mock = new Mock<IProducer<string, string>>();
+        var message = new Message<string, string>() { Value = "test message." };
 
-            // Assert
-            Assert.NotNull(producerWrapper.Producer);
-            Assert.IsAssignableFrom<IProducer<string, string>>(producerWrapper.Producer);
-        }
+        mock.Setup(x => x.Produce("topic1", message, null));
 
-        [Fact]
-        public void EnsureOnProduceMethodCalledOnce()
-        {
-            // Arrange
-            var mock = new Mock<IProducer<string, string>>();
-            var message = new Message<string, string>() { Value = "test message." };
+        var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
 
-            mock.Setup(x => x.Produce("topic1", message, null));
+        // Act
+        producerWrapper.OnProduce("topic1", message);
 
-            var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
+        // Assert
+        mock.Verify(x => x.Produce("topic1", message, null), Times.Once());
+    }
 
-            // Act
-            producerWrapper.OnProduce("topic1", message);
+    [Fact]
+    public async Task EnsureOnProduceAsyncMethodCalledOnce()
+    {
+        // Arrange
+        var mock = new Mock<IProducer<string, string>>();
 
-            // Assert
-            mock.Verify(x => x.Produce("topic1", message, null), Times.Once());
-        }
+        var message = new Message<string, string>() { Value = "test message." };
+        var result = new DeliveryResult<string, string>();
 
-        [Fact]
-        public async Task EnsureOnProduceAsyncMethodCalledOnce()
-        {
-            // Arrange
-            var mock = new Mock<IProducer<string, string>>();
-            
-            var message = new Message<string, string>() { Value = "test message." };
-            var result = new DeliveryResult<string, string>();
+        mock.Setup(x => x.ProduceAsync("topic1", message, default).Result)
+            .Returns(result);
 
-            mock.Setup(x => x.ProduceAsync("topic1", message, default).Result)
-                .Returns(result);
+        var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
 
-            var producerWrapper = new ProducerWrapper(_loggerFactory, mock.Object);
+        // Act
+        var dr = await producerWrapper.OnProduceAsync("topic1", message);
 
-            // Act
-            var dr = await producerWrapper.OnProduceAsync("topic1", message);
+        // Assert
+        Assert.Equal(result, dr);
 
-            // Assert
-            Assert.Equal(result, dr);
-
-            mock.Verify(x => x.ProduceAsync("topic1", message, default), Times.Once());
-        }
+        mock.Verify(x => x.ProduceAsync("topic1", message, default), Times.Once());
     }
 }
