@@ -29,6 +29,7 @@ internal static class KafkaBuilder
             consumerBinding.BindOnAfterSerialization();
             consumerBinding.BindOnConsume();
             consumerBinding.BindOnConsumeError();
+            consumerBinding.BindOnFinish();
 
             producerWrapperBuilder = new ProducerWrapperBuilder<T>(consumerObj, provider);
             producerWrapper ??= producerWrapperBuilder.Build();
@@ -67,6 +68,7 @@ internal static class KafkaBuilder
             consumerBinding.BindOnAfterSerialization();
             consumerBinding.BindOnConsume();
             consumerBinding.BindOnConsumeError();
+            consumerBinding.BindOnFinish();
 
             producerWrapperBuilder = new ProducerWrapperBuilder<T>(consumerObj, provider);
             producerWrapper ??= producerWrapperBuilder.Build();

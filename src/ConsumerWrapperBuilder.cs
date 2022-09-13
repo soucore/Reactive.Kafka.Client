@@ -23,8 +23,16 @@
 
             var consumer = builder.Build();
             consumer.Subscribe(configuration.Topic);
+            CallOnInit();
 
             return provider.CreateInstance<ConsumerWrapper<TMessage>>(consumer, configuration);
+        }
+
+        private void CallOnInit()
+        {
+            typeof(T)
+                .GetMethod("OnInit")?
+                .Invoke(consumerObj, Array.Empty<object>());
         }
 
         public void CallOnConsumerConfiguration()

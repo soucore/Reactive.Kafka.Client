@@ -14,17 +14,22 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     public event Func<T, T> OnAfterSerialization;
     public event EventHandlerAsync<ConsumerMessage<T>> OnConsume;
     public event EventHandlerAsync<KafkaConsumerError> OnConsumeError;
+    public event Action<Exception> OnFinish;
     #endregion
 
     private readonly ILogger _logger;
+    private readonly IHostApplicationLifetime _hostApp;
 
-    public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaConfiguration configuration)
+    public ConsumerWrapper(
+        IHostApplicationLifetime hostApp,
+        ILoggerFactory loggerFactory, 
+        IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
         _logger = loggerFactory.CreateLogger("Reactive.Kafka.Consumer");
 
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
-
+        _hostApp = hostApp;
         Consumer = consumer;
         Configuration = configuration;
     }
@@ -40,7 +45,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
         return Task.Factory.StartNew(() =>
         {
-            while (true)
+            while (!_hostApp.ApplicationStopping.IsCancellationRequested)
             {
                 try
                 {
@@ -65,6 +70,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 }
                 catch (ConsumeException ex)
                 {
+                    OnFinish.Invoke(ex);
                     if (_logger.IsEnabled(LogLevel.Error))
                     {
                         _logger.LogError("Unable to consume messages, consumer {ConsumerName} shutting down.", Consumer.Name);
@@ -76,7 +82,9 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                     throw;
                 }
             }
+            OnFinish.Invoke(new TaskCanceledException("Consumer task cancelled!"));
         }, TaskCreationOptions.LongRunning);
+        
     }
 
     public Message<string, string> ConsumeMessage()

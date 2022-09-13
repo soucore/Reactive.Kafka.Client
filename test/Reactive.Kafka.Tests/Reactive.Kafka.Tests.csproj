@@ -28,8 +28,4 @@
     <ProjectReference Include="..\..\src\Reactive.Kafka.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Asserts\" />
-  </ItemGroup>
-
 </Project>
