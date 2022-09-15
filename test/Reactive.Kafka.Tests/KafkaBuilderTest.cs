@@ -1,4 +1,6 @@
-﻿using Reactive.Kafka.Configurations;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.Internal;
+using Reactive.Kafka.Configurations;
 
 namespace Reactive.Kafka.Tests;
 
@@ -58,22 +60,5 @@ public class KafkaBuilderTest
 
         // Assert
         sut.Should().HaveCount(5);
-    }
-
-    private static PartitionMetadata GetPartitionMetadata(int partitionId)
-    {
-        return new(1, 1, Array.Empty<int>(), Array.Empty<int>(), null);
-    }
-
-    private static TopicMetadata GetTopicMetadata(string topic)
-    {
-        List<PartitionMetadata> partitions = new() { GetPartitionMetadata(1) };
-        return new(topic, partitions, null);
-    }
-
-    private static Metadata GetMetadata(string topic)
-    {
-        List<TopicMetadata> topicMetadata = new() { GetTopicMetadata("test-topic") };
-        return new(null, topicMetadata, 0, null);
     }
 }

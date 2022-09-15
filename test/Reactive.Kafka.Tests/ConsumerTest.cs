@@ -1,4 +1,5 @@
-﻿using Reactive.Kafka.Exceptions;
+﻿using Microsoft.Extensions.Hosting;
+using Reactive.Kafka.Exceptions;
 using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Tests;

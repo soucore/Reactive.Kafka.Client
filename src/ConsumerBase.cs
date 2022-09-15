@@ -10,6 +10,11 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     public virtual string OnBeforeSerialization(string rawMessage) => rawMessage;
     public virtual T OnAfterSerialization(T message) => message;
 
+    /// <summary>
+    /// Method executed immediately after subscribing to the topic and before starting to consume the message.
+    /// </summary>
+    public virtual void OnReady() { }
+
     public virtual void OnProducerConfiguration(ProducerConfig configuration) { }
     public virtual void OnConsumerConfiguration(ConsumerConfig configuration) { }
     public virtual void OnConsumerBuilder(ConsumerBuilder<string, string> builder) { }

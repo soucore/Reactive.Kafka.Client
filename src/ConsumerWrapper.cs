@@ -18,13 +18,14 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
     private readonly ILogger _logger;
 
-    public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaConfiguration configuration)
+    public ConsumerWrapper(
+        ILoggerFactory loggerFactory, 
+        IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
         _logger = loggerFactory.CreateLogger("Reactive.Kafka.Consumer");
 
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
-
         Consumer = consumer;
         Configuration = configuration;
     }
@@ -70,6 +71,11 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                         _logger.LogError("Unable to consume messages, consumer {ConsumerName} shutting down.", Consumer.Name);
                         _logger.LogError("{Message}", ex.Message);
                     }
+
+                    if (OnConsumeError is null)
+                        continue;
+
+                    OnConsumeError.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
                 }
                 catch (Exception)
                 {
