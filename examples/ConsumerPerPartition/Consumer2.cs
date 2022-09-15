@@ -12,6 +12,11 @@ namespace ConsumerPerPartition
             _logger = logger;
         }
 
+        public override void OnReady()
+        {
+            _logger.LogInformation("Consumer Ready!");
+        }
+
         public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, Commit commit)
         {
             _logger.LogInformation("{Message}", consumerMessage.Message.FirstName);

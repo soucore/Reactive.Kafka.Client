@@ -6,8 +6,6 @@ namespace Reactive.Kafka.Tests;
 
 public class ConsumerTest
 {
-    private readonly Mock<IHostApplicationLifetime> _hostApp = new();
-
     private readonly IConsumer<string, string> _consumer
         = new ConsumerBuilder<string, string>(new ConsumerConfig
         {
@@ -23,7 +21,7 @@ public class ConsumerTest
     public void OnBeforeSerializationEvent(string rawMessage, string expectedMessage)
     {
         // Arrange
-        var consumerWrapper = new ConsumerWrapper<string>(_hostApp.Object, _loggerFactory, _consumer, new());
+        var consumerWrapper = new ConsumerWrapper<string>(_loggerFactory, _consumer, new());
         var beforeSerialization = "";
         var kafkaMessage = new Message<string, string> { Key = "", Value = rawMessage };
 
@@ -46,7 +44,7 @@ public class ConsumerTest
     public void OnAfterSerializationEvent()
     {
         // Arrange
-        var consumerWrapper = new ConsumerWrapper<MessageTest>(_hostApp.Object, _loggerFactory, _consumer, new());
+        var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
         var kafkaMessage = new Message<string, string> { Key = "", Value = @"{""Id"":1,""Name"":""Paul""}" };
         var expectedMessage = new MessageTest { Id = 1, Name = "John" };
 
@@ -72,7 +70,7 @@ public class ConsumerTest
     public async Task UnsuccessfulMessageConversionFromStringToObject()
     {
         // Arrange
-        var consumerWrapper = new ConsumerWrapper<MessageTest>(_hostApp.Object, _loggerFactory, _consumer, new());
+        var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
         var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
         // Act
@@ -93,7 +91,7 @@ public class ConsumerTest
     public async Task UnsuccessfulMessageConversionFromStringToInteger()
     {
         // Arrange
-        var consumerWrapper = new ConsumerWrapper<int>(_hostApp.Object, _loggerFactory, _consumer, new());
+        var consumerWrapper = new ConsumerWrapper<int>(_loggerFactory, _consumer, new());
         var kafkaMessage = new Message<string, string> { Key = "", Value = "I can't be converted." };
 
         // Act
@@ -116,7 +114,7 @@ public class ConsumerTest
     public void OnConsumeEvent(string rawMessage, int expectedId, string expectedName)
     {
         // Arrange
-        var consumerWrapper = new ConsumerWrapper<MessageTest>(_hostApp.Object, _loggerFactory, _consumer, new());
+        var consumerWrapper = new ConsumerWrapper<MessageTest>(_loggerFactory, _consumer, new());
         var kafkaMessage = new Message<string, string> { Key = "", Value = rawMessage };
 
         int? id = null;

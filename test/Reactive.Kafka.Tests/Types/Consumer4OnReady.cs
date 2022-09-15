@@ -2,7 +2,7 @@
 
 namespace Reactive.Kafka.Tests.Types;
 
-public class Consumer4OnInit : ConsumerBase<string>
+public class Consumer4OnReady : ConsumerBase<string>
 {
     public bool IsInit { get; set; }
     public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
@@ -10,7 +10,7 @@ public class Consumer4OnInit : ConsumerBase<string>
         return Task.CompletedTask;
     }
 
-    public override void OnInit()
+    public override void OnReady()
     {
         IsInit = true;
     }

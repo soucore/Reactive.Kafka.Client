@@ -6,7 +6,6 @@
         private const string onBeforeSerialization = "OnBeforeSerialization";
         private const string onAfterSerialization = "OnAfterSerialization";
         private const string onConsumeError = "OnConsumeError";
-        private const string onFinishEvent = "OnFinish";
 
         public ConsumerBinding(object source, object target) : base(source, target) { }
 
@@ -31,11 +30,6 @@
         {
             if (target is IKafkaConsumerError)
                 Bind(onConsumeError, onConsumeError);
-        }
-
-        public void BindOnFinish()
-        {
-            Bind(onFinishEvent, onFinishEvent);
         }
     }
 }

@@ -13,7 +13,7 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     /// <summary>
     /// Method executed immediately after subscribing to the topic and before starting to consume the message.
     /// </summary>
-    public virtual void OnInit() { }
+    public virtual void OnReady() { }
 
     public virtual void OnProducerConfiguration(ProducerConfig configuration) { }
     public virtual void OnConsumerConfiguration(ConsumerConfig configuration) { }
@@ -22,12 +22,6 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     {
         return Task.CompletedTask;
     }
-
-    /// <summary>
-    /// Method called when the consumer dies or loses connection reference after attempts.
-    /// </summary>
-    /// <param name="exeption">Exception received!</param>
-    public virtual void OnFinish(Exception exeption) { }
 
     #region Abstract Methods
     public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);

@@ -17,8 +17,6 @@ public class KafkaBuilderTest
         serviceCollection.AddTransient<IProducerWrapper, ProducerWrapper>();
         serviceCollection.AddSingleton<IList<IConsumerWrapper>, List<IConsumerWrapper>>();
         serviceCollection.AddSingleton<ILoggerFactory, LoggerFactory>();
-        serviceCollection.AddSingleton<ILogger<ApplicationLifetime>, Logger<ApplicationLifetime>>();
-        serviceCollection.AddSingleton<IHostApplicationLifetime, ApplicationLifetime>();
 
         Mock<IKafkaAdmin> kafkaAdmin;
 

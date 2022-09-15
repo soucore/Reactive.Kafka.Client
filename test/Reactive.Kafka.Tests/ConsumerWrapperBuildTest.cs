@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Hosting.Internal;
-using Microsoft.Extensions.Hosting;
-using Reactive.Kafka.Configurations;
+﻿using Reactive.Kafka.Configurations;
+using Reactive.Kafka.Extensions;
 
 namespace Reactive.Kafka.Tests
 {
@@ -17,8 +16,6 @@ namespace Reactive.Kafka.Tests
             serviceCollection.AddTransient<IProducerWrapper, ProducerWrapper>();
             serviceCollection.AddSingleton<IList<IConsumerWrapper>, List<IConsumerWrapper>>();
             serviceCollection.AddSingleton<ILoggerFactory, LoggerFactory>();
-            serviceCollection.AddSingleton<ILogger<ApplicationLifetime>, Logger<ApplicationLifetime>>();
-            serviceCollection.AddSingleton<IHostApplicationLifetime, ApplicationLifetime>();
 
             Mock<IKafkaAdmin> kafkaAdmin;
 
@@ -39,10 +36,10 @@ namespace Reactive.Kafka.Tests
             configuration.Topic = "test-topic";
             configuration.ConsumerConfig.BootstrapServers = "localhost:9092";
             configuration.ConsumerConfig.GroupId = "test-group";
-            var consumerObject = new Consumer4OnInit();
+            var consumerObject = new Consumer4OnReady();
 
             // Act
-            _ = new ConsumerWrapperBuilder<Consumer4OnInit, string>(consumerObject, configuration, provider)
+            _ = provider.CreateInstance<ConsumerWrapperBuilder<Consumer4OnReady, string>>(new object[] { consumerObject, configuration })
                 .Build();
 
             //Assert

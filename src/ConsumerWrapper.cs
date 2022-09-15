@@ -14,14 +14,11 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     public event Func<T, T> OnAfterSerialization;
     public event EventHandlerAsync<ConsumerMessage<T>> OnConsume;
     public event EventHandlerAsync<KafkaConsumerError> OnConsumeError;
-    public event Action<Exception> OnFinish;
     #endregion
 
     private readonly ILogger _logger;
-    private readonly IHostApplicationLifetime _hostApp;
 
     public ConsumerWrapper(
-        IHostApplicationLifetime hostApp,
         ILoggerFactory loggerFactory, 
         IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
@@ -29,7 +26,6 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
-        _hostApp = hostApp;
         Consumer = consumer;
         Configuration = configuration;
     }
@@ -45,7 +41,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
         return Task.Factory.StartNew(() =>
         {
-            while (!_hostApp.ApplicationStopping.IsCancellationRequested)
+            while (true)
             {
                 try
                 {
@@ -70,21 +66,23 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 }
                 catch (ConsumeException ex)
                 {
-                    OnFinish.Invoke(ex);
                     if (_logger.IsEnabled(LogLevel.Error))
                     {
                         _logger.LogError("Unable to consume messages, consumer {ConsumerName} shutting down.", Consumer.Name);
                         _logger.LogError("{Message}", ex.Message);
                     }
+
+                    if (OnConsumeError is null)
+                        continue;
+
+                    OnConsumeError.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
                 }
                 catch (Exception)
                 {
                     throw;
                 }
             }
-            OnFinish.Invoke(new TaskCanceledException("Consumer task cancelled!"));
         }, TaskCreationOptions.LongRunning);
-        
     }
 
     public Message<string, string> ConsumeMessage()

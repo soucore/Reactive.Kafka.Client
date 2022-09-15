@@ -6,7 +6,9 @@
         private readonly KafkaConfiguration configuration;
         private readonly IServiceProvider provider;
 
-        public ConsumerWrapperBuilder(object consumerObj, KafkaConfiguration configuration, IServiceProvider provider)
+        public ConsumerWrapperBuilder(object consumerObj, 
+            KafkaConfiguration configuration, 
+            IServiceProvider provider)
         {
             this.consumerObj = consumerObj;
             this.configuration = configuration;
@@ -23,15 +25,16 @@
 
             var consumer = builder.Build();
             consumer.Subscribe(configuration.Topic);
-            CallOnInit();
+
+            CallOnReady();
 
             return provider.CreateInstance<ConsumerWrapper<TMessage>>(consumer, configuration);
         }
 
-        private void CallOnInit()
+        private void CallOnReady()
         {
             typeof(T)
-                .GetMethod("OnInit")?
+                .GetMethod("OnReady")?
                 .Invoke(consumerObj, Array.Empty<object>());
         }
 
