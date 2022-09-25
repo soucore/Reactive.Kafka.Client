@@ -11,9 +11,9 @@ namespace ConsumerPerPartition
             _logger = logger;
         }
 
-        public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
+        public override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
         {
-            _logger.LogInformation("{Message}", consumerMessage.Message);
+            _logger.LogInformation("{Message}", consumerMessage.Value);
             return Task.CompletedTask;
         }
     }

@@ -4,7 +4,7 @@ namespace Reactive.Kafka;
 
 #region Custom Delegates
 public delegate List<TopicPartitionOffset> Commit();
-public delegate Task EventHandlerAsync<in TMessage>(TMessage e, Commit commit);
+public delegate Task EventHandlerAsync<in TMessage>(TMessage e, ConsumerContext context);
 #endregion
 
 public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
@@ -12,8 +12,8 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     #region Events
     public event Func<string, string> OnBeforeSerialization;
     public event Func<T, T> OnAfterSerialization;
+    public event Func<ConsumerContext, Task> OnConsumeError;
     public event EventHandlerAsync<ConsumerMessage<T>> OnConsume;
-    public event EventHandlerAsync<KafkaConsumerError> OnConsumeError;
     #endregion
 
     private readonly ILogger _logger;
@@ -42,26 +42,42 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                ConsumerContext consumeContext = null;
+
                 try
                 {
-                    Message<string, string> consumedMessage = ConsumeMessage(stoppingToken);
+                    ConsumeResult<string, string> consumeResult = ConsumeMessage();
 
-                    if (consumedMessage is null)
+                    if (consumeResult is null)
                         continue;
 
-                    (bool successfulConversion, T message) = ConvertMessage(consumedMessage);
+                    consumeContext = new ConsumerContext
+                    {
+                        Consumer = Consumer,
+                        ConsumeResult = consumeResult,
+                        RawMessage = consumeResult.Message.Value
+                    };
+
+                    (bool successfulConversion, T message) = ConvertMessage(consumeResult.Message);
 
                     if (successfulConversion)
                     {
-                        SuccessfulConversion(consumedMessage.Key, message);
+                        var consumerMessage = new ConsumerMessage<T>(consumeResult.Message.Key, message);
+
+                        SuccessfulConversion(consumerMessage, consumeContext);
                         continue;
                     }
 
-                    UnsuccessfulConversion(consumedMessage);
+                    UnsuccessfulConversion(consumeResult.Message);
                 }
                 catch (KafkaConsumerException ex)
                 {
-                    OnConsumeError?.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
+                    if (OnConsumeError is null)
+                        continue;
+
+                    consumeContext.Exception = ex;
+
+                    OnConsumeError.Invoke(consumeContext).Wait();
                 }
                 catch (ConsumeException ex)
                 {
@@ -75,7 +91,12 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                     if (_logger.IsEnabled(LogLevel.Error))
                         _logger.LogError(ex, "An internal kafka error has occurred.");
 
-                    OnConsumeError?.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
+                    if (OnConsumeError is null)
+                        continue;
+
+                    consumeContext.Exception = ex;
+
+                    OnConsumeError.Invoke(consumeContext).Wait();
                 }
                 catch (Exception ex)
                 {
@@ -126,7 +147,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         return (false, default(T));
     }
 
-    public void SuccessfulConversion(string key, T message)
+    public void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context)
     {
         if (_logger.IsEnabled(LogLevel.Debug))
             _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);

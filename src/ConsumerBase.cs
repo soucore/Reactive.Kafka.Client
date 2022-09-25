@@ -19,13 +19,13 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     public virtual void OnProducerConfiguration(ProducerConfig configuration) { }
     public virtual void OnConsumerConfiguration(ConsumerConfig configuration) { }
     public virtual void OnConsumerBuilder(ConsumerBuilder<string, string> builder) { }
-    public virtual Task OnConsumeError(KafkaConsumerError consumerError, Commit commit)
+    public virtual Task OnConsumeError(ConsumerContext context)
     {
         return Task.CompletedTask;
     }
 
     #region Abstract Methods
-    public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, Commit commit);
+    public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, ConsumerContext context);
     #endregion
 
     public void Produce(string topic, string message)

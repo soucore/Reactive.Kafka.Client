@@ -3,7 +3,7 @@
 public interface IConsumerWrapper<T> : IConsumerWrapper
 {
     (bool, T) ConvertMessage(Message<string, string> kafkaMessage);
-    void SuccessfulConversion(string key, T message);
+    void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context);
 }
 
 public interface IConsumerWrapper
