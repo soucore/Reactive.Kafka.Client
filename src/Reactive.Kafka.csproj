@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <Authors>SouCore Community</Authors>
     <Product>Reactive Kafka Client</Product>
     <Description>Abstract and simplify integrations with confluent kafka</Description>

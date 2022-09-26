@@ -6,9 +6,7 @@
         private readonly KafkaConfiguration configuration;
         private readonly IServiceProvider provider;
 
-        public ConsumerWrapperBuilder(object consumerObj, 
-            KafkaConfiguration configuration, 
-            IServiceProvider provider)
+        public ConsumerWrapperBuilder(object consumerObj, KafkaConfiguration configuration, IServiceProvider provider)
         {
             this.consumerObj = consumerObj;
             this.configuration = configuration;
@@ -23,6 +21,14 @@
 
             CallOnConsumerBuilder(builder);
 
+            try
+            {
+                // turns off librdkafka's automatic partition assignment/revocation
+                // and instead delegates that responsibility to the application.
+                builder.SetPartitionsRevokedHandler((consumer, tpo) => { });
+            }
+            catch (InvalidOperationException) { }
+
             var consumer = builder.Build();
             consumer.Subscribe(configuration.Topic);
 
@@ -32,24 +38,18 @@
         }
 
         private void CallOnReady()
-        {
-            typeof(T)
+            => typeof(T)
                 .GetMethod("OnReady")?
                 .Invoke(consumerObj, Array.Empty<object>());
-        }
 
         public void CallOnConsumerConfiguration()
-        {
-            typeof(T)
+            => typeof(T)
                 .GetMethod("OnConsumerConfiguration")?
                 .Invoke(consumerObj, new object[] { configuration.ConsumerConfig });
-        }
 
         public void CallOnConsumerBuilder(ConsumerBuilder<string, string> builder)
-        {
-            typeof(T)
+            => typeof(T)
                 .GetMethod("OnConsumerBuilder")?
                 .Invoke(consumerObj, new object[] { builder });
-        }
     }
 }
