@@ -17,13 +17,13 @@ Features:
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
 ```
-Install-Package Reactive.Kafka.Client -Version 2.0.2
+Install-Package Reactive.Kafka.Client -Version 2.1.1
 ```
 
 To add a reference to a dotnet core project, execute the following at the command line:
 
 ```
-dotnet add package -v 2.0.2 Reactive.Kafka.Client
+dotnet add package -v 2.1.1 Reactive.Kafka.Client
 ```
 
 ## Message lifecycle
@@ -60,19 +60,20 @@ public class MyConsumer : ConsumerBase<Message>
 }
 ```
 
-`OnConsume` and `OnConsumerBuilder` are required. The others are not required and you implement just the ones you need.
+Only `OnConsume` is required. The others are not required and you implement just the ones you need.
 
 ### Lifecycle event sequence
 
-| Hook method             | Purpose                                   | Timing                                                                                  | Required |
-|-------------------------|-------------------------------------------|-----------------------------------------------------------------------------------------|----------|
-| OnConsumerConfiguration       |                                           | Called once, for each consumer instance, before confluent kafka consumer built.         | No       |
-| OnProducerConfiguration       | Producer instance for message forwarding. | Called once, for each consumer instance, before confluent kafka producer built.         | No       |
-| OnConsumerBuilder |                                           | Called once, for each consumer instance, after confluent kafka consumer has been built. | No      |
-| OnBeforeSerialization   | Treatment of the message.                 | Called after message consume from topic and before `OnAfterSerialization`.              | No       |
-| OnAfterSerialization    | Enrichment of the message.                | Called after serialization process, may not occur if serialization fails.               | No       |
-| OnConsume               | Business logic.                           | Called immediately after `OnAfterSerialization` for each message.                       | Yes      |
-| OnConsumeError          |                                           | Called when serialization process fails.                                                | No       |
+| Hook method | Purpose | Timing | Required |
+|--------------|--------------|--------------|--------------|
+| OnConsumerConfiguration | | Called once, for each consumer instance, during the consumer setup process. | No |
+| OnProducerConfiguration | Producer instance for message forwarding. | Called once, for each consumer instance, during the producer setup process. | No |
+| OnConsumerBuilder | | Called once, for each consumer instance, before the kafka consumer is built. | No |
+| OnReady | | Called once, for each consumer instance, after the kafka consumer is built. | No |
+| OnBeforeSerialization | Treatment of the message. | Called after topic message consumption and before `OnAfterSerialization`. | No |
+| OnAfterSerialization | Enrichment of the message. | Called after the serialization process, may not occur if serialization fails. | No |
+| OnConsume | Business logic. | Called immediately after `OnAfterSerialization` for each message. | Yes |
+| OnConsumeError | | Called when serialization process fails. | No |
 
 ## Concept
 ![Concept Image](docs/concept.png)
