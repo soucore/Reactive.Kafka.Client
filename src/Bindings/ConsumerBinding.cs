@@ -2,7 +2,7 @@
 {
     internal sealed class ConsumerBinding : Binding
     {
-        private const string onConsumeEvent = "OnConsume";
+        private const string onConsume = "OnConsume";
         private const string onBeforeSerialization = "OnBeforeSerialization";
         private const string onAfterSerialization = "OnAfterSerialization";
         private const string onConsumeError = "OnConsumeError";
@@ -11,7 +11,7 @@
 
         public void BindOnConsume()
         {
-            Bind(onConsumeEvent, onConsumeEvent);
+            Bind(onConsume, onConsume);
         }
 
         public void BindOnBeforeSerialization()

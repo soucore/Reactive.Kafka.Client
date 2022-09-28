@@ -18,14 +18,13 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
     private readonly ILogger _logger;
 
-    public ConsumerWrapper(
-        ILoggerFactory loggerFactory, 
-        IConsumer<string, string> consumer, KafkaConfiguration configuration)
+    public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
         _logger = loggerFactory.CreateLogger("Reactive.Kafka.Consumer");
 
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Creating consumer {ConsumerName}", consumer.Name);
+
         Consumer = consumer;
         Configuration = configuration;
     }
@@ -34,18 +33,21 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     public KafkaConfiguration Configuration { get; }
     public DateTime LastConsume { get; private set; } = DateTime.Now;
 
-    public Task ConsumerStart()
+    public Task ConsumerStart(TaskCompletionSource<object> taskCompletionSource, CancellationToken stoppingToken)
     {
         if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("Initializing consumer {ConsumerName}", Consumer.Name);
 
         return Task.Factory.StartNew(() =>
         {
-            while (true)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    Message<string, string> consumedMessage = ConsumeMessage();
+                    Message<string, string> consumedMessage = ConsumeMessage(stoppingToken);
+
+                    if (consumedMessage is null)
+                        continue;
 
                     (bool successfulConversion, T message) = ConvertMessage(consumedMessage);
 
@@ -68,7 +70,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 {
                     if (_logger.IsEnabled(LogLevel.Error))
                     {
-                        _logger.LogError("Unable to consume messages, consumer {ConsumerName} shutting down.", Consumer.Name);
+                        _logger.LogError("Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
                         _logger.LogError("{Message}", ex.Message);
                     }
 
@@ -82,17 +84,29 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                     throw;
                 }
             }
-        }, TaskCreationOptions.LongRunning);
+
+            _logger.LogInformation("Stopping consumer {ConsumerName}", Consumer.Name);
+
+            taskCompletionSource.TrySetResult(null);
+
+        }, stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
     }
 
-    public Message<string, string> ConsumeMessage()
+    public Message<string, string> ConsumeMessage(CancellationToken stoppingToken)
     {
-        var result = Consumer.Consume();
+        try
+        {
+            var result = Consumer.Consume(stoppingToken);
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-            _logger.LogDebug("Message received from partition {Partition}: {MessageValue}", result.Partition.Value, result.Message.Value);
+            if (result != null && _logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Message received from partition {Partition}: {MessageValue}", result.Partition.Value, result.Message.Value);
 
-        return result.Message;
+            return result.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
     }
 
     public (bool, T) ConvertMessage(Message<string, string> kafkaMessage)
