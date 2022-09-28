@@ -16,8 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-	  <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
-	  <PackageReference Include="Serilog.Formatting.Elasticsearch" Version="8.4.1" />
   </ItemGroup>
 
   <ItemGroup>
