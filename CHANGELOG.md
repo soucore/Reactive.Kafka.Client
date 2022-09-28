@@ -1,3 +1,12 @@
+# 2.1.2
+### Enhancements
+- Implemented `WaitForConsumersShutdown` to wait for all consumers finish their jobs on a graceful shutdown (or timeout is reached: 1 minute).
+
+# 2.1.1
+### Enhancements
+
+- Set the `SetPartitionsRevokedHandler` handle as default to turn off librdkafka's automatic partition assignment/revocation, preventing issues caused by rebalancing with auto-commit disabled.
+
 # 1.2.3
 ### Enhancements
 
