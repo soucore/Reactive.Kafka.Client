@@ -42,7 +42,7 @@ public class HelperConvertTest
         const string expected = "MessageTest { Id = 0, Name = Kafka }";
 
         // Act
-        var result = TrySerializeType(str, false, out MessageTest output);
+        var result = TrySerializeType(str, new(), out MessageTest output);
 
         // Assert
         Assert.True(result);
@@ -57,7 +57,7 @@ public class HelperConvertTest
         const string str = "valor";
 
         // Act
-        var result = TrySerializeType(str, false, out MessageTest output);
+        var result = TrySerializeType(str, new(), out MessageTest output);
 
         // Assert
         Assert.False(result);

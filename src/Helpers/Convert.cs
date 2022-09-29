@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Reactive.Kafka.Enums;
 
 namespace Reactive.Kafka.Helpers;
 
@@ -24,13 +25,17 @@ public static class Convert
         }
     }
 
-    public static bool TrySerializeType<T>(string value, bool respectObjectContract, out T output)
+    public static bool TrySerializeType<T>(string value, KafkaConfiguration configuration, out T output)
     {
         output = default;
 
         try
         {
-            output = JsonConvert.DeserializeObject<T>(value, respectObjectContract ? settings : null);
+            if (configuration.SerializerProvider == SerializerProvider.Newtonsoft)
+                output = JsonConvert.DeserializeObject<T>(value, configuration.RespectObjectContract ? settings : null);
+            else
+                output = System.Text.Json.JsonSerializer.Deserialize<T>(value);
+
             return true;
         }
         catch

@@ -23,7 +23,7 @@ public static class ServiceProviderExtensions
 
         // block the calling thread until consumers
         // shutdown or timeout is reached.
-        Task.WaitAll(tasksToWait, 60 * 1000);
+        Task.WaitAll(tasksToWait, TimeSpan.FromMinutes(1));
     }
 
     public static T CreateInstance<T>(this IServiceProvider provider, params object[] parameters)

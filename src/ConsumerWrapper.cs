@@ -61,33 +61,34 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 }
                 catch (KafkaConsumerException ex)
                 {
-                    if (OnConsumeError is null)
-                        continue;
-
-                    OnConsumeError.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
+                    OnConsumeError?.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
                 }
                 catch (ConsumeException ex)
                 {
                     if (_logger.IsEnabled(LogLevel.Error))
-                    {
-                        _logger.LogError("Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
-                        _logger.LogError("{Message}", ex.Message);
-                    }
+                        _logger.LogError(ex, "Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
 
-                    if (OnConsumeError is null)
-                        continue;
-
-                    OnConsumeError.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
+                    OnConsumeError?.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
                 }
-                catch (Exception)
+                catch (KafkaException ex)
                 {
+                    if (_logger.IsEnabled(LogLevel.Error))
+                        _logger.LogError(ex, "An internal kafka error has occurred.");
+
+                    OnConsumeError?.Invoke(new KafkaConsumerError(ex), Consumer.Commit).Wait();
+                }
+                catch (Exception ex)
+                {
+                    if (_logger.IsEnabled(LogLevel.Error))
+                        _logger.LogError(ex, "Consumer failed", ex.Message);
+
                     throw;
                 }
             }
 
             _logger.LogInformation("Stopping consumer {ConsumerName}", Consumer.Name);
 
-            taskCompletionSource.TrySetResult(null);
+            taskCompletionSource?.TrySetResult(null);
 
         }, stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
     }
@@ -114,7 +115,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         if (OnBeforeSerialization is not null)
             kafkaMessage.Value = OnBeforeSerialization.Invoke(kafkaMessage.Value);
 
-        if (Convert.TrySerializeType(kafkaMessage.Value, Configuration.RespectObjectContract, out T message) || Convert.TryChangeType(kafkaMessage.Value, out message))
+        if (Convert.TrySerializeType(kafkaMessage.Value, Configuration, out T message) || Convert.TryChangeType(kafkaMessage.Value, out message))
         {
             if (OnAfterSerialization is not null)
                 message = OnAfterSerialization.Invoke(message);
@@ -130,8 +131,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         if (_logger.IsEnabled(LogLevel.Debug))
             _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
 
-        if (OnConsume is not null)
-            OnConsume.Invoke(new ConsumerMessage<T>(key, message), Consumer.Commit).Wait();
+        OnConsume?.Invoke(new ConsumerMessage<T>(key, message), Consumer.Commit).Wait();
     }
 
     public void UnsuccessfulConversion(Message<string, string> kafkaMessage)

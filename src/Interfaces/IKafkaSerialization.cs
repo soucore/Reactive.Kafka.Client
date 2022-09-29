@@ -3,19 +3,26 @@
 public interface IKafkaSerialization<T> : IKafkaSerialization
 {
     /// <summary>
-    /// Get or handle message before serialization process
+    ///     Handles raw message before serialization process.
     /// </summary>
-    /// <param name="rawMessage">Virgin message</param>
-    /// <returns></returns>
+    /// <param name="rawMessage">
+    ///     Raw message consumed from topic.
+    /// </param>
+    /// <returns>
+    ///     Raw message to be forwarded for serialization.
+    /// </returns>
     string OnBeforeSerialization(string rawMessage);
 
-
     /// <summary>
-    /// Get or handle message after the serialization process 
-    /// and before emitting the event to the consumer.
+    ///     Handles serialized object after serialization process,
+    ///     may not occur if serilization fails.
     /// </summary>
-    /// <param name="message">serialized object</param>
-    /// <returns></returns>
+    /// <param name="message">
+    ///     Serialized object.
+    /// </param>
+    /// <returns>
+    ///     Serialized object to be forwarded to the OnConsume step.
+    /// </returns>
     T OnAfterSerialization(T message);
 }
 

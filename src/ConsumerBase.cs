@@ -1,6 +1,6 @@
 ﻿namespace Reactive.Kafka;
 
-public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfiguration, IKafkaConsumerError, IKafkaSerialization<T>
+public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfiguration, IKafkaConsumerError, IKafkaConsumerBuilder, IKafkaSerialization<T>
 {
     #region producer events
     public event Action<string, Message<string, string>> OnProduce;
@@ -11,7 +11,8 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     public virtual T OnAfterSerialization(T message) => message;
 
     /// <summary>
-    /// Method executed immediately after subscribing to the topic and before starting to consume the message.
+    ///     Called once, for each consumer instance,
+    ///     after the kafka consumer is built.
     /// </summary>
     public virtual void OnReady() { }
 
