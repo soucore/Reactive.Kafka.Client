@@ -17,13 +17,13 @@ Features:
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
 ```
-Install-Package Reactive.Kafka.Client -Version 2.1.2
+Install-Package Reactive.Kafka.Client -Version 2.1.4
 ```
 
 To add a reference to a dotnet core project, execute the following at the command line:
 
 ```
-dotnet add package -v 2.1.2 Reactive.Kafka.Client
+dotnet add package -v 2.1.4 Reactive.Kafka.Client
 ```
 
 ## Message lifecycle
@@ -164,8 +164,8 @@ IHost host = Host.CreateDefaultBuilder(args)
             configurator.AddConsumerPerPartition<ConsumerExample, Message>("localhost:9092", (provider, config) => {
                 // json messages that don't agree with the object will throw an exception.
                 // You can catch and handle it in the OnConsumeError method.
-                config.RespectObjectContract = true; 
-
+                config.RespectObjectContract = true;
+                
                 config.Topic = "your-topic";
                 config.ConsumerConfig.GroupId = "your-group";
                 config.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
