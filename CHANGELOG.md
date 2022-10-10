@@ -1,3 +1,17 @@
+# 2.1.4
+### Enhancements
+- Configuration property to set `JsonSerializerOptions`.
+```csharp
+config.JsonSerializerOptions = new(JsonSerializerDefaults.Web);
+```
+
+# 2.1.3
+### Enhancements
+- Ability to switch between Newtonsoft or System.Text.Json serialization providers.
+```csharp
+config.SerializerProvider = SerializerProvider.SystemTextJson; // Newtonsoft is the default.
+```
+
 # 2.1.2
 ### Enhancements
 - Implemented `WaitForConsumersShutdown` to wait for all consumers finish their jobs on a graceful shutdown (or timeout is reached: 1 minute).
