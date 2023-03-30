@@ -1,4 +1,4 @@
-﻿using static Reactive.Kafka.Helpers.Convert;
+﻿using Reactive.Kafka.Helpers;
 
 namespace Reactive.Kafka.Tests;
 
@@ -8,30 +8,30 @@ public class HelperConvertTest
     public void TryChangeTypeIsTrue()
     {
         // Arrange
-        const int value = 2;
-        const string expected = "2";
+        const string value = "2";
+        const int expected = 2;
 
         // Act
-        var isChange = TryChangeType(value, out string output);
+        (bool success, int result) = Convert<int>.TryChangeType(value, new());
 
         // Assert
-        Assert.True(isChange);
-        Assert.True(output == expected);
+        Assert.True(success);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
     public void TryChangeTypeIsFalse()
     {
         // Arrange
-        List<int> value = new();
+        const string value = "{}";
         const int expected = 0;
 
         // Act
-        var isChange = TryChangeType(value, out int output);
+        (bool success, int result) = Convert<int>.TryChangeType(value, new());
 
         // Assert
-        Assert.False(isChange);
-        Assert.True(output == expected);
+        Assert.False(success);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
@@ -42,12 +42,11 @@ public class HelperConvertTest
         const string expected = "MessageTest { Id = 0, Name = Kafka }";
 
         // Act
-        var result = TrySerializeType(str, new(), out MessageTest output);
+        (bool success, MessageTest result) = Convert<MessageTest>.TrySerializeType(str, new());
 
         // Assert
-        Assert.True(result);
-        Assert.True(output.ToString() == expected);
-
+        Assert.True(success);
+        Assert.Equal(expected, result.ToString());
     }
 
     [Fact]
@@ -57,10 +56,10 @@ public class HelperConvertTest
         const string str = "valor";
 
         // Act
-        var result = TrySerializeType(str, new(), out MessageTest output);
+        (bool success, MessageTest result) = Convert<MessageTest>.TrySerializeType(str, new());
 
         // Assert
-        Assert.False(result);
-        Assert.Null(output);
+        Assert.False(success);
+        Assert.Null(result);
     }
 }

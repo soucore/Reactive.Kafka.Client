@@ -1,46 +1,45 @@
-﻿using Newtonsoft.Json;
-using Reactive.Kafka.Enums;
+﻿using Reactive.Kafka.Enums;
+using static Newtonsoft.Json.JsonConvert;
+using static System.Text.Json.JsonSerializer;
 
 namespace Reactive.Kafka.Helpers;
 
-public static class Convert
+public static class Convert<T>
 {
-    private readonly static JsonSerializerSettings settings = new()
+    public static (bool, T) TryChangeType(string value, KafkaConfiguration configuration)
     {
-        MissingMemberHandling = MissingMemberHandling.Error
-    };
-
-    public static bool TryChangeType<T>(object value, out T output)
-    {
-        output = default;
-
         try
         {
-            output = (T)System.Convert.ChangeType(value, typeof(T));
-            return true;
+            T output = (T)Convert.ChangeType(value, typeof(T));
+            return (true, output);
         }
         catch
         {
-            return false;
+            return (false, default);
         }
     }
 
-    public static bool TrySerializeType<T>(string value, KafkaConfiguration configuration, out T output)
+    public static (bool, T) TrySerializeType(string value, KafkaConfiguration configuration)
     {
-        output = default;
-
         try
         {
-            if (configuration.SerializerProvider == SerializerProvider.Newtonsoft)
-                output = JsonConvert.DeserializeObject<T>(value, configuration.RespectObjectContract ? settings : null);
-            else
-                output = System.Text.Json.JsonSerializer.Deserialize<T>(value);
+            T output;
 
-            return true;
+            if (configuration.SerializerProvider == SerializerProvider.Newtonsoft)
+                output = DeserializeObject<T>(value, configuration.JsonSerializerSettings);
+            else
+                output = Deserialize<T>(value, configuration.JsonSerializerOptions);
+
+            return (true, output);
         }
         catch
         {
-            return false;
+            return (false, default);
         }
+    }
+
+    public static (bool, string) TryStringType(string value, KafkaConfiguration configuration)
+    {
+        return (true, value);
     }
 }

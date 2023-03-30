@@ -12,8 +12,8 @@ public class ConsumerMessageTest
         // Assert
         Assert.Equal("key1", message1.Key);
         Assert.Equal("key2", message2.Key);
-        Assert.Equal(1, message1.Message);
-        Assert.Equal(2, message2.Message);
+        Assert.Equal(1, message1.Value);
+        Assert.Equal(2, message2.Value);
     }
 
     [Fact]
@@ -26,10 +26,10 @@ public class ConsumerMessageTest
         // Assert
         Assert.Equal("key1", message1.Key);
         Assert.Equal("key2", message2.Key);
-        Assert.Equal(18, message1.Message.Age);
-        Assert.Equal(40, message2.Message.Age);
-        Assert.Equal("Anne", message1.Message.Name);
-        Assert.Equal("John", message2.Message.Name);
+        Assert.Equal(18, message1.Value.Age);
+        Assert.Equal(40, message2.Value.Age);
+        Assert.Equal("Anne", message1.Value.Name);
+        Assert.Equal("John", message2.Value.Name);
     }
 
     public record Person(int Age, string Name);

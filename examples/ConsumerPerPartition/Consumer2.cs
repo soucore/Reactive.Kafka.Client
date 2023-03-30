@@ -1,10 +1,9 @@
 ﻿using Confluent.Kafka;
 using Reactive.Kafka;
-using Reactive.Kafka.Exceptions;
 
 namespace ConsumerPerPartition;
 
-public class Consumer2 : ConsumerBase<string>
+public class Consumer2 : ConsumerBase<Message>
 {
     private readonly ILogger<Consumer2> _logger;
 
@@ -13,38 +12,23 @@ public class Consumer2 : ConsumerBase<string>
         _logger = logger;
     }
 
-    public override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
     {
-        _logger.LogInformation("[{MemberId}] {Message}", context.Consumer.Name, consumerMessage.Value);
+        _logger.LogInformation("Consumer Name: {ConsumerName}", context.Consumer.Name);
+        _logger.LogInformation("Topic:         {Topic}", context.ConsumeResult.Topic);
+        _logger.LogInformation("Partition:     {Partition}", context.ConsumeResult.TopicPartition.Partition.Value);
+        _logger.LogInformation("Thread:        {Thread}", Environment.CurrentManagedThreadId);
+        _logger.LogInformation("Message:       {Message}", consumerMessage.Value);
 
-        return Task.CompletedTask;
-    }
+        context.Commit();
 
-    public override Task OnConsumeError(ConsumerContext context)
-    {
-        if (context.Exception is KafkaSerializationException)
-        {
-            _logger.LogError("{ErrorMessage}", context.Exception.Message);
-            _logger.LogError("{Message}", context.RawMessage);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public override void OnConsumerBuilder(ConsumerBuilder<string, string> builder)
-    {
-        builder.SetLogHandler((consumer, logMessage) => { });
+        await Task.CompletedTask;
     }
 
     public override void OnConsumerConfiguration(ConsumerConfig configuration)
     {
-        configuration.SessionTimeoutMs = 10 * 1000;
-        configuration.Debug = "protocol";
-    }
-
-    public override void OnProducerConfiguration(ProducerConfig configuration)
-    {
-        configuration.BootstrapServers = "localhost:9092";
-        configuration.Acks = Acks.None;
+        configuration.EnableAutoCommit = false;
+        configuration.AutoCommitIntervalMs = 0;
+        configuration.AutoOffsetReset = AutoOffsetReset.Latest;
     }
 }
