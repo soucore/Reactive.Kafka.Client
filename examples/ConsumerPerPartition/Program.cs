@@ -10,8 +10,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         {
             configurator.AddConsumerPerPartition<Consumer1, Message>("localhost:9092", (provider, cfg) =>
             {
-                cfg.Topic = "tenho-15";
-                cfg.ConsumerConfig.GroupId = "grupo-tenho-15";
+                cfg.Topic = "your-topic";
+                cfg.ConsumerConfig.GroupId = "your-group";
                 cfg.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
                 cfg.UseNewtonsoft(settings =>
                 {
@@ -21,8 +21,8 @@ IHost host = Host.CreateDefaultBuilder(args)
 
             configurator.AddConsumerPerPartition<Consumer2, Message>("localhost:9092", (provider, cfg) =>
             {
-                cfg.Topic = "tenho-3";
-                cfg.ConsumerConfig.GroupId = "grupo-tenho-3";
+                cfg.Topic = "your-another-topic";
+                cfg.ConsumerConfig.GroupId = "your-another-group";
                 cfg.UseSystemTextJson(options =>
                 {
                     options.PropertyNameCaseInsensitive = true;

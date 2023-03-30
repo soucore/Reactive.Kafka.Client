@@ -19,6 +19,8 @@ public class Consumer : ConsumerBase<string>
         _logger.LogInformation("Thread:        {Thread}", Environment.CurrentManagedThreadId);
         _logger.LogInformation("Message:       {Message}", consumerMessage.Value);
 
+        context.Commit(context.ConsumeResult);
+
         await Task.CompletedTask;
     }
 

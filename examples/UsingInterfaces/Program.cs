@@ -6,7 +6,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddReactiveKafka((provider, configurator) =>
         {
-            configurator.AddConsumerPerPartition<Consumer, string>("localhost:9092", "tenho-15", "grupo-tenho-15");
+            configurator.AddConsumerPerPartition<Consumer, string>("localhost:9092", "your-topic", "your-group");
         });
     })
     .Build();
