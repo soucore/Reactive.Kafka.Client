@@ -138,7 +138,7 @@ public class ConsumerExample : ConsumerBase<Message>
 {
     public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
     {       
-        if (consumerMessage.Id == 0) {
+        if (consumerMessage.Value.Id == 0) {
             await ProducerAsync("DeadLetterTopic", context.ConsumeResult.Message.Value);
             return;
         }
