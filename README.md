@@ -123,6 +123,19 @@ await host.RunAsync();
 
 Creates a consumer per partition of a given topic.
 
+Overloads:
+```csharp
+AddConsumerPerPartition<T, TMessage>(string bootstrap, string topic, string groupId = null)
+AddConsumerPerPartition<T, TMessage>(string bootstrap, Action<KafkaConfiguration> setupAction)
+```
+
+Reactive Kafka will create one consumer for each partition of your topic, for example, if your topic has 3 partitions then there will be 3 consumers, each consumer having its own thread and listening to its own partition throughout the lifecycle. This concept can give you a performance boost. As shown in the image below:
+
+![Concept Image](docs/per_partition.png)
+
+Partition and thread numbers are for illustrative purposes only.
+
+Example:
 ```csharp
 // Message.cs
 public class Message
