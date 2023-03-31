@@ -37,26 +37,14 @@ Respond to events in the lifecycle of a message by overriding one or more of the
 ```csharp
 public class MyConsumer : ConsumerBase<Message>
 {
-    public override void OnConsumerConfiguration(ConsumerConfig configuration)
-    {
-        // your consumer configuration here.
-    }
-
-    public override string OnBeforeSerialization(string rawMessage)
-    {
-        // your treatment here.
-    }
-    
-    public override Message OnAfterSerialization(Message message)
-    {
-        // your enrichment here.
-    }
-    
-    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
-    {
-        // your business logic here.
-        return Task.CompletedTask;
-    }
+    public override void OnConsumerConfiguration(ConsumerConfig configuration) { }
+    public override void OnProducerConfiguration(ProducerConfig configuration) { }
+    public override void OnConsumerBuilder(ConsumerBuilder<string, string> builder) { }
+    public override void OnReady() { }
+    public override string OnBeforeSerialization(string rawMessage) { }
+    public override Message OnAfterSerialization(Message message) { }  
+    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context) { }
+    public override Task OnConsumeError(ConsumerContext context)
 }
 ```
 
@@ -131,7 +119,7 @@ AddConsumerPerPartition<T, TMessage>(string bootstrap, Action<KafkaConfiguration
 
 Reactive Kafka will create one consumer for each partition of your topic, for example, if your topic has 3 partitions then there will be 3 consumers, each consumer having its own thread and listening to its own partition throughout the lifecycle. This concept can give you a performance boost. As shown in the image below:
 
-![Concept Image](docs/per_partition.png)
+![PerPartition Image](docs/per_partition.png)
 
 Partition and thread numbers are for illustrative purposes only.
 
@@ -152,6 +140,8 @@ public class ConsumerExample : ConsumerBase<Message>
     public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
     {       
         if (consumerMessage.Value.Id == 0) {
+            // You could, for example, to use the Producer instance
+            // to forward the original message to a DLQ.
             await ProducerAsync("DeadLetterTopic", context.ConsumeResult.Message.Value);
             return;
         }
@@ -162,6 +152,8 @@ public class ConsumerExample : ConsumerBase<Message>
         context.Commit();
     }
     
+    // Optional
+    // Creates a single Producer instance shared among all consumers.
     public override void OnProducerConfiguration(ProducerConfig configuration)
     {
         configuration.BootstrapServers = "localhost:9092";
@@ -185,6 +177,10 @@ IHost host = Host.CreateDefaultBuilder(args)
                 cfg.ConsumerConfig.AutoCommitIntervalMs = 0;
                 cfg.ConsumerConfig.EnableAutoCommit = false;
                 
+                // You can choose between Newtonsoft or System.Text.Json serializers.
+                // UseNewtonsoft(Action<JsonSerializerSettings> action = null)
+                // UseSystemTextJson(Action<JsonSerializerOptions> action = null)
+                // default is Newtonsoft.
                 cfg.UseNewtonsoft(settings =>
                 {
                     settings.MissingMemberHandling = MissingMemberHandling.Error;
@@ -201,6 +197,14 @@ await host.RunAsync();
 ### AddReactiveKafkaConsumerPerQuantity
 
 Creates a specified number of consumer in a given topic.
+
+Overloads:
+```csharp
+AddConsumerPerQuantity<T, TMessage>(string bootstrap, int quantity, string topic, string groupId = null)
+AddConsumerPerQuantity<T, TMessage>(string bootstrap, int quantity, Action<KafkaConfiguration> setupAction)
+```
+
+![PerQuantity Image](docs/per_quantity.png)
 
 ```csharp
 // ConsumerExample.cs
@@ -236,7 +240,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddReactiveKafka((provider, configurator) => {
-            configurator.AddConsumerPerQuantity<ConsumerExample, string>("localhost:9092", (provider, cfg) => {
+            configurator.AddConsumerPerQuantity<ConsumerExample, string>("localhost:9092", quantity: 2, (provider, cfg) => {
                 cfg.Topic = "your-topic";
                 cfg.ConsumerConfig.GroupId = "your-group";
                 
@@ -255,3 +259,11 @@ await host.RunAsync();
 All PRs are welcome. If you are planning to contribute a large patch or to
 integrate a new tool, please create an issue first to get any upfront questions
 or design decisions out of the way first.
+
+## Chat us
+
+An official #ReactiveKafka IRC channel on liberachat (server web.libera.chat) for discussion. You can use your favorite IRC client or use the web chat at https://web.libera.chat/?#ReactiveKafka.
+
+## License
+
+MIT License, see [LICENSE](https://github.com/soucore/Reactive.Kafka.Client/blob/main/LICENSE).
