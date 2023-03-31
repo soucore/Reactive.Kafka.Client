@@ -82,7 +82,7 @@ With few lines you have a Kafka Consumer taking advantage of each partition.
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<string>
 {
-    public async override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
     {
         Console.WriteLine("Message: {0}", consumerMessage.Value);   
         await Task.CompletedTask;
@@ -216,7 +216,7 @@ public class ConsumerExample : ConsumerBase<string>
         return newMessage;
     }
 
-    public async override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
     {
         Console.WriteLine("Message: {0}", consumerMessage.Value);
         await Task.CompletedTask;
