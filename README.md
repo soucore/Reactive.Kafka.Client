@@ -257,7 +257,7 @@ await host.RunAsync();
 ## Contributing
 
 All PRs are welcome. If you are planning to contribute a large patch or to
-integrate a new tool, please create an issue first to get any upfront questions
+integrate a new feature, please create an issue first to get any upfront questions
 or design decisions out of the way first.
 
 ## Chat us
