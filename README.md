@@ -54,14 +54,14 @@ Only `OnConsume` is required. The others are not required and you implement just
 
 | Hook method | Purpose | Timing | Required |
 |--------------|--------------|--------------|--------------|
-| OnConsumerConfiguration | | Called once, for each consumer instance, during the consumer setup process. | No |
-| OnProducerConfiguration | Producer instance for message forwarding. | Called once, for each consumer instance, during the producer setup process. | No |
+| OnConsumerConfiguration | `ConsumerConfig` configuration | Called once, for each consumer instance, during the consumer setup process. | No |
+| OnProducerConfiguration | `ProducerConfig` configuration | Called once, for each consumer instance, during the producer setup process. | No |
 | OnConsumerBuilder | | Called once, for each consumer instance, before the kafka consumer is built. | No |
 | OnReady | | Called once, for each consumer instance, after the kafka consumer is built. | No |
-| OnBeforeSerialization | Treatment of the message. | Called after topic message consumption and before `OnAfterSerialization`. | No |
-| OnAfterSerialization | Enrichment of the message. | Called after the serialization process, may not occur if serialization fails. | No |
-| OnConsume | Business logic. | Called immediately after `OnAfterSerialization` for each message. | Yes |
-| OnConsumeError | | Called when serialization process fails. | No |
+| OnBeforeSerialization | <p align="center">Raw message handling</p> | Called after topic message consumption and before `OnAfterSerialization`. | No |
+| OnAfterSerialization | <p align="center">Message enrichment</p> | Called after the serialization process, may not occur if serialization fails. | No |
+| OnConsume | <p align="center">Business logic</p> | Called immediately after `OnAfterSerialization` for each message. | Yes |
+| OnConsumeError | <p align="center">Exception handling</p> | Called when serialization process fails. | No |
 
 ## Concept
 ![Concept Image](docs/concept.png)
@@ -69,9 +69,9 @@ Only `OnConsume` is required. The others are not required and you implement just
 ## Usage
 
 - Exclusive thread per consumer.
-- Possibility to inject anything from DI (Dependency Injection) in your consumer.
+- Inject anything from DI (Dependency Injection) in your consumer.
 
-Check out our examples for a full demonstration. 😉</br>
+Check out our examples for a full demonstration.</br>
 All our examples were built on the `Worker Services`, but it could be an `ASP.NET` or `Console` application.
 
 ### Simplest Kafka Consumer ever
@@ -154,6 +154,7 @@ public class ConsumerExample : ConsumerBase<Message>
     
     // Optional
     // Creates a single Producer instance shared among all consumers.
+    // If this method is not declared, the producer won't be created.
     public override void OnProducerConfiguration(ProducerConfig configuration)
     {
         configuration.BootstrapServers = "localhost:9092";
@@ -204,7 +205,11 @@ AddConsumerPerQuantity<T, TMessage>(string bootstrap, int quantity, string topic
 AddConsumerPerQuantity<T, TMessage>(string bootstrap, int quantity, Action<KafkaConfiguration> setupAction)
 ```
 
+Reactive Kafka will create the amount of consumers you requested, for example, if your topic has 4 partitions and you request for 2 consumers, then there will be 2 consumers, each consumer having its own thread and listening for 2 partitions throughout the lifecycle. As shown in the image below:
+
 ![PerQuantity Image](docs/per_quantity.png)
+
+Partition and thread numbers are for illustrative purposes only.
 
 ```csharp
 // ConsumerExample.cs
