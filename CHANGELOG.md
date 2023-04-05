@@ -1,3 +1,9 @@
+# 3.0.0
+### Enhancements
+- `OnConsume` and `OnConsumeError` hooks now have a `ConsumerContext` parameter that encapsulates all information about consumer and the processed message. As a shortcut, you can use all commit overloads directly on the ConsumerContext.
+- Changed the way you choose the json serializer. Now you have 2 methods `UseNewtonsoft` and `UseSystemTextJson`, each one with equivalent configuration class as optional. Default is Newtonsoft. Property `RespectObjectContract` has been removed.
+- Changed the way the library chooses between System.Convert or Json Serialization, now based on typecode of the generic type.
+
 # 2.1.2
 ### Enhancements
 - Implemented `WaitForConsumersShutdown` to wait for all consumers finish their jobs on a graceful shutdown (or timeout is reached: 1 minute).
