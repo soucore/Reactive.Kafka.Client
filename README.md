@@ -63,6 +63,8 @@ Only `OnConsume` is required. The others are not required and you implement just
 | OnConsume | <p align="center">Business logic</p> | Called immediately after `OnAfterSerialization` for each message. | Yes |
 | OnConsumeError | <p align="center">Exception handling</p> | Called when serialization process fails. | No |
 
+<br/>Exceptions thrown by user code must be handled manually by the user, `OnConsumeError` just handles exceptions thrown by kafka, consumer or json serializers.
+
 ## Concept
 ![Concept Image](docs/concept.png)
 
@@ -105,6 +107,20 @@ IHost host = Host.CreateDefaultBuilder(args)
 
 await host.RunConsumersAsync();
 await host.RunAsync();
+```
+
+You can enable debug logging messages in appsettings.json by setting the `Reactive.Kafka` category to `Debug`:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting": "Critical",
+      "Reactive.Kafka": "Debug"
+    }
+  }
+}
 ```
 
 ### AddReactiveKafkaConsumerPerPartition
