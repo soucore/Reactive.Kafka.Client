@@ -2,7 +2,7 @@
 
 public interface IConsumerWrapper<T> : IConsumerWrapper
 {
-    void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context);
+    void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context, CancellationToken cancellationToken);
 }
 
 public interface IConsumerWrapper

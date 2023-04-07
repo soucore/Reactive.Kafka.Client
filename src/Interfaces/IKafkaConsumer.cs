@@ -2,7 +2,7 @@
 
 public interface IKafkaConsumer<T> : IKafkaConsumer
 {
-    Task OnConsume(ConsumerMessage<T> consumerMessage, ConsumerContext context);
+    Task OnConsume(ConsumerMessage<T> consumerMessage, ConsumerContext context, CancellationToken cancellationToken);
 }
 
 public interface IKafkaConsumer { }

@@ -12,6 +12,8 @@ Features:
 - Ease to run a **consumer per partition** using threads.
 - Message **deserialization** to the desired object effortless.
 - Specific method for the correct treatment of **error messages**.
+- Exclusive thread per consumer.
+- Inject anything from DI (Dependency Injection) in your consumer.
 
 ## Installation
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
@@ -43,7 +45,7 @@ public class MyConsumer : ConsumerBase<Message>
     public override void OnReady() { }
     public override string OnBeforeSerialization(string rawMessage) { }
     public override Message OnAfterSerialization(Message message) { }  
-    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context) { }
+    public override Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context, CancellationToken cancellationToken) { }
     public override Task OnConsumeError(ConsumerContext context)
 }
 ```
@@ -58,10 +60,10 @@ Only `OnConsume` is required. The others are not required and you implement just
 | OnProducerConfiguration | `ProducerConfig` configuration | Called once, for each consumer instance, during the producer setup process. | No |
 | OnConsumerBuilder | | Called once, for each consumer instance, before the kafka consumer is built. | No |
 | OnReady | | Called once, for each consumer instance, after the kafka consumer is built. | No |
-| OnBeforeSerialization | <p align="center">Raw message handling</p> | Called after topic message consumption and before `OnAfterSerialization`. | No |
-| OnAfterSerialization | <p align="center">Message enrichment</p> | Called after the serialization process, may not occur if serialization fails. | No |
-| OnConsume | <p align="center">Business logic</p> | Called immediately after `OnAfterSerialization` for each message. | Yes |
-| OnConsumeError | <p align="center">Exception handling</p> | Called when serialization process fails. | No |
+| OnBeforeSerialization | Raw message handling | Called after topic message consumption and before `OnAfterSerialization`. | No |
+| OnAfterSerialization | Message enrichment | Called after the serialization process, may not occur if serialization fails. | No |
+| OnConsume | Business logic | Called immediately after `OnAfterSerialization` for each message. | Yes |
+| OnConsumeError | Exception handling | Called when serialization process fails. | No |
 
 <br/>Exceptions thrown by user code must be handled manually by the user, `OnConsumeError` just handles exceptions thrown by kafka, consumer or json serializers.
 
@@ -70,10 +72,8 @@ Only `OnConsume` is required. The others are not required and you implement just
 
 ## Usage
 
-- Exclusive thread per consumer.
-- Inject anything from DI (Dependency Injection) in your consumer.
-
-Check out our examples for a full demonstration.</br>
+Inherits from `ConsumerBase<T>` class and overrides the methods you want to use or uses interfaces with `IKafkaConsumer<T>` as required.<br/>
+Check out our examples for a full demonstration.<br/>
 All our examples were built on the `Worker Services`, but it could be an `ASP.NET` or `Console` application.
 
 ### Simplest Kafka Consumer ever
@@ -84,7 +84,7 @@ With few lines you have a Kafka Consumer taking advantage of each partition.
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<string>
 {
-    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         Console.WriteLine("Message: {0}", consumerMessage.Value);   
         await Task.CompletedTask;
@@ -153,7 +153,7 @@ public class Message
 // ConsumerExample.cs
 public class ConsumerExample : ConsumerBase<Message>
 {
-    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {       
         if (consumerMessage.Value.Id == 0) {
             // You could, for example, to use the Producer instance
@@ -237,7 +237,7 @@ public class ConsumerExample : ConsumerBase<string>
         return newMessage;
     }
 
-    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         Console.WriteLine("Message: {0}", consumerMessage.Value);
         await Task.CompletedTask;

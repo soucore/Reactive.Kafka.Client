@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace Reactive.Kafka.Tests.Types;
 
 public class Consumer1 : ConsumerBase<string>
 {
-    public override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public override Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }

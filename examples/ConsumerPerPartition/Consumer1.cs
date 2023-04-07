@@ -11,7 +11,7 @@ public class Consumer1 : ConsumerBase<Message>
         _logger = logger;
     }
 
-    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context)
+    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Consumer Name: {ConsumerName}", context.Consumer.Name);
         _logger.LogInformation("Topic:         {Topic}", context.ConsumeResult.Topic);

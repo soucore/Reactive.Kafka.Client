@@ -13,7 +13,7 @@ public class Consumer : IKafkaConsumer<string>, IKafkaConsumerError, IKafkaConsu
         _logger = logger;
     }
 
-    public async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context)
+    public async Task OnConsume(ConsumerMessage<string> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Consumer Name: {ConsumerName}", context.Consumer.Name);
         _logger.LogInformation("Topic:         {Topic}", context.ConsumeResult.Topic);

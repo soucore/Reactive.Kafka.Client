@@ -25,7 +25,7 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     }
 
     #region Abstract Methods
-    public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, ConsumerContext context);
+    public abstract Task OnConsume(ConsumerMessage<T> consumerMessage, ConsumerContext context, CancellationToken cancellationToken);
     #endregion
 
     public void Produce(string topic, string message)

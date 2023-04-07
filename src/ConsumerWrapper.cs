@@ -3,7 +3,7 @@
 namespace Reactive.Kafka;
 
 #region Custom Delegates
-public delegate Task EventHandlerAsync<in TMessage>(TMessage e, ConsumerContext context);
+public delegate Task EventHandlerAsync<in TMessage>(TMessage e, ConsumerContext context, CancellationToken cancellationToken);
 #endregion
 
 public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
@@ -70,7 +70,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
                         var consumerMessage = new ConsumerMessage<T>(consumeResult.Message.Key, message);
 
-                        SuccessfulConversion(consumerMessage, Context);
+                        SuccessfulConversion(consumerMessage, Context, stoppingToken);
                         continue;
                     }
 
@@ -132,12 +132,12 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         }
     }
 
-    public void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context)
+    public void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
     {
         if (_logger.IsEnabled(LogLevel.Debug))
             _logger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
 
-        OnConsume?.Invoke(consumerMessage, context).Wait();
+        OnConsume?.Invoke(consumerMessage, context, cancellationToken).Wait();
     }
 
     public void UnsuccessfulConversion(Message<string, string> kafkaMessage)
