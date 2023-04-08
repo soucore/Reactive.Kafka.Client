@@ -5,9 +5,9 @@ public sealed class ConsumerMessage<T>
     public ConsumerMessage(string key, T message)
     {
         Key = key;
-        Message = message;
+        Value = message;
     }
 
     public string Key { get; }
-    public T Message { get; }
+    public T Value { get; }
 }

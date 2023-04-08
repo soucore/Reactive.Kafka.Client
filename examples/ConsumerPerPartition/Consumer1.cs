@@ -1,20 +1,24 @@
 ﻿using Reactive.Kafka;
 
-namespace ConsumerPerPartition
+namespace ConsumerPerPartition;
+
+public class Consumer1 : ConsumerBase<Message>
 {
-    public class Consumer1 : ConsumerBase<string>
+    private readonly ILogger<Consumer1> _logger;
+
+    public Consumer1(ILogger<Consumer1> logger)
     {
-        private readonly ILogger<Consumer1> _logger;
+        _logger = logger;
+    }
 
-        public Consumer1(ILogger<Consumer1> logger)
-        {
-            _logger = logger;
-        }
+    public override async Task OnConsume(ConsumerMessage<Message> consumerMessage, ConsumerContext context, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Consumer Name: {ConsumerName}", context.Consumer.Name);
+        _logger.LogInformation("Topic:         {Topic}", context.ConsumeResult.Topic);
+        _logger.LogInformation("Partition:     {Partition}", context.ConsumeResult.TopicPartition.Partition.Value);
+        _logger.LogInformation("Thread:        {Thread}", Environment.CurrentManagedThreadId);
+        _logger.LogInformation("Message:       {Message}", consumerMessage.Value);
 
-        public override Task OnConsume(ConsumerMessage<string> consumerMessage, Commit commit)
-        {
-            _logger.LogInformation("{Message}", consumerMessage.Message);
-            return Task.CompletedTask;
-        }
+        await Task.CompletedTask;
     }
 }

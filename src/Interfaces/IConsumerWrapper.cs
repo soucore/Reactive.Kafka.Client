@@ -2,8 +2,7 @@
 
 public interface IConsumerWrapper<T> : IConsumerWrapper
 {
-    (bool, T) ConvertMessage(Message<string, string> kafkaMessage);
-    void SuccessfulConversion(string key, T message);
+    void SuccessfulConversion(ConsumerMessage<T> consumerMessage, ConsumerContext context, CancellationToken cancellationToken);
 }
 
 public interface IConsumerWrapper
@@ -12,6 +11,6 @@ public interface IConsumerWrapper
     KafkaConfiguration Configuration { get; }
     DateTime LastConsume { get; }
     Task ConsumerStart(TaskCompletionSource<object> taskCompletionSource, CancellationToken stoppingToken);
-    Message<string, string> ConsumeMessage(CancellationToken stoppingToken);
+    ConsumeResult<string, string> ConsumeMessage(CancellationToken stoppingToken);
     void UnsuccessfulConversion(Message<string, string> kafkaMessage);
 }

@@ -1,16 +1,19 @@
+using Confluent.Kafka;
 using Reactive.Kafka.Extensions;
-using UsingAbstractClass.Consumers;
+using UsingAbstractClass;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddReactiveKafka((provider, configurator) =>
         {
-            configurator.AddConsumerPerQuantity<Consumer2, string>("localhost:9092", quantity: 2, (provider, config) =>
+            configurator.AddConsumerPerQuantity<Consumer, string>("localhost:9092", quantity: 2, (provider, cfg) =>
             {
-                config.RespectObjectContract = true;
-                config.Topic = "your-topic";
-                config.ConsumerConfig.GroupId = "your-group";
+                cfg.Topic = "your-topic";
+                cfg.ConsumerConfig.GroupId = "your-group";
+                cfg.ConsumerConfig.AutoCommitIntervalMs = 0;
+                cfg.ConsumerConfig.EnableAutoCommit = false;
+                cfg.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
             });
         });
     })
