@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using ConsumerPerPartition;
+using Newtonsoft.Json;
 using Reactive.Kafka.Extensions;
 
 IHost host = Host.CreateDefaultBuilder(args)
@@ -7,12 +8,25 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddReactiveKafka((provider, configurator) =>
         {
-            configurator.AddConsumerPerPartition<Consumer2, Message>("localhost:9092", "your-topic", "your-group");
-            configurator.AddConsumerPerPartition<Consumer1, string>("localhost:9092", (provider, configuration) =>
+            configurator.AddConsumerPerPartition<Consumer1, Message>("localhost:9092", (provider, cfg) =>
             {
-                configuration.Topic = "your-another-topic";
-                configuration.ConsumerConfig.GroupId = "your-another-group";
-                configuration.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
+                cfg.Topic = "your-topic";
+                cfg.ConsumerConfig.GroupId = "your-group";
+                cfg.ConsumerConfig.AutoOffsetReset = AutoOffsetReset.Latest;
+                cfg.UseNewtonsoft(settings =>
+                {
+                    settings.MissingMemberHandling = MissingMemberHandling.Error;
+                });
+            });
+
+            configurator.AddConsumerPerPartition<Consumer2, Message>("localhost:9092", (provider, cfg) =>
+            {
+                cfg.Topic = "your-another-topic";
+                cfg.ConsumerConfig.GroupId = "your-another-group";
+                cfg.UseSystemTextJson(options =>
+                {
+                    options.PropertyNameCaseInsensitive = true;
+                });
             });
         });
     })
