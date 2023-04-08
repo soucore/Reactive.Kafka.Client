@@ -72,8 +72,8 @@ Only `OnConsume` is required. The others are not required and you implement just
 
 ## Usage
 
-Inherits from `ConsumerBase<T>` class and overrides the methods you want to use or uses interfaces with `IKafkaConsumer<T>` as required.<br/>
-Check out our examples for a full demonstration.<br/><br/>
+Inherits from `ConsumerBase<T>` class and overrides the methods you want to use or uses interfaces with `IKafkaConsumer<T>` as required.<br/><br/>
+Check out our examples for a full demonstration.<br/>
 All our examples were built on the `Worker Services`, but it could be an `ASP.NET` or `Console` application.
 
 ### Simplest Kafka Consumer ever
