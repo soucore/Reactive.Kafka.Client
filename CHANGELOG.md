@@ -1,3 +1,7 @@
+# 8.0.0
+### Enhancements
+- Updated to .NET 8 (Major version now will now be related to the .NET version used).
+
 # 3.0.0
 ### Enhancements
 - `OnConsume` and `OnConsumeError` hooks now have a `ConsumerContext` parameter that encapsulates all information about consumer and the processed message. As a shortcut, you can use all commit overloads directly on the ConsumerContext.
