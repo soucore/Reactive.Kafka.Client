@@ -1,6 +1,6 @@
 # 8.0.0
 ### Enhancements
-- Updated to .NET 8 (Major version now will now be related to the .NET version used).
+- Updated to .NET 8 (Major version will now be related to the .NET version used).
 
 # 3.0.0
 ### Enhancements
