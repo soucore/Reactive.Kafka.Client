@@ -27,8 +27,6 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         Configuration = configuration;
         Context = new() { Consumer = consumer };
 
-        Topic = consumer.Subscription.First();
-
         convertMessage = Type.GetTypeCode(typeof(T)) == TypeCode.Object
             ? Convert<T>.TrySerializeType
             : Convert<T>.TryChangeType;
@@ -36,7 +34,6 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
     #region Properties
     public IConsumer<string, string> Consumer { get; }
-    public string Topic { get; }
     public KafkaConfiguration Configuration { get; }
     public DateTime LastConsume { get; private set; } = DateTime.Now;
     public ConsumerContext Context { get; }
@@ -59,6 +56,8 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         {
             try
             {
+                ConsumerActivity?.Stop();
+
                 var result = Consumer.Consume(stoppingToken);
                 if (result is null)
                     continue;
@@ -71,8 +70,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 var (success, message) = convertMessage(result.Message.Value, Configuration);
                 if (!success)
                 {
-                    ConsumerLogger.LogDebug("Unable convert message to {Name}", typeof(T).Name);
-                    continue;
+                    throw new ConversionException($"Unable convert message to {typeof(T).Name}");
                 }
 
                 InvokeOnAfterSerialization(ref message);
@@ -81,7 +79,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
                 InvokeOnConsume(result, message);
             }
-            catch (Exception ex) when (ex is ConsumeException or KafkaException)
+            catch (Exception ex) when (ex is ConsumeException or KafkaException or ConversionException)
             {
                 HandleKafkaOrConsumeException(ex);
             }
@@ -94,13 +92,10 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 HandleUserCodeException(ex);
                 throw;
             }
-            finally
-            {
-                ConsumerActivity?.Stop();
-            }
         }
 
         ConsumerLogger.LogInformation("Stopping consumer {ConsumerName}", Consumer.Name);
+        ConsumerActivity?.Stop();
         Consumer.Close();
 
         taskCompletionSource?.TrySetResult(null);
@@ -133,6 +128,9 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
         if (ex is KafkaException)
             ConsumerLogger.LogError(ex, "{ErrorMessage}", "An internal kafka error has occurred.");
+
+        if (ex is KafkaSerializationException)
+            ConsumerLogger.LogError(ex, "Unable convert message to {TypeName}", typeof(T).Name);
 
         Context.Exception = ex;
         OnConsumeError?.Invoke(Context).Wait();

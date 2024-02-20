@@ -1,10 +1,8 @@
-name: CI Workflow
+name: Deploy Workflow
 on:
   push:
     branches:
-      - '**'
-      - '!release/**'
-  workflow_dispatch:
+      - 'release/**'
 
 env:
   CONFIGURATION: "Release"
@@ -23,11 +21,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNETVERSION }}
 
-      - name: Install dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build -c ${{ env.CONFIGURATION }} --no-restore
-
-      - name: Test with the dotnet CLI
-        run: dotnet test --no-build --no-restore
+      - name: publish on version change
+        id: publish_nuget
+        uses: brandedoutcast/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: src/Reactive.Kafka.csproj
+          BUILD_CONFIGURATION: Release
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_SOURCE: https://api.nuget.org
