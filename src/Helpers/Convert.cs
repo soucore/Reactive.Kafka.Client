@@ -6,7 +6,7 @@ namespace Reactive.Kafka.Helpers;
 
 public static class Convert<T>
 {
-    public static (bool, T) TryChangeType(string value, KafkaConfiguration configuration)
+    public static (bool Success, T Message) TryChangeType(string value, KafkaConfiguration configuration)
     {
         try
         {
@@ -19,7 +19,7 @@ public static class Convert<T>
         }
     }
 
-    public static (bool, T) TrySerializeType(string value, KafkaConfiguration configuration)
+    public static (bool Success, T Message) TrySerializeType(string value, KafkaConfiguration configuration)
     {
         try
         {
@@ -38,7 +38,7 @@ public static class Convert<T>
         }
     }
 
-    public static (bool, string) TryStringType(string value, KafkaConfiguration configuration)
+    public static (bool Success, string Message) TryStringType(string value, KafkaConfiguration configuration)
     {
         return (true, value);
     }
