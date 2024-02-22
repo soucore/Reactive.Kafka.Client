@@ -15,41 +15,33 @@
 
         public ConsumerWrapper<TMessage> Build()
         {
-            CallOnConsumerConfiguration();
+            InvokeOnConsumerConfiguration();
 
             var builder = new ConsumerBuilder<string, string>(configuration.ConsumerConfig);
 
-            CallOnConsumerBuilder(builder);
-
-            try
-            {
-                // turns off librdkafka's automatic partition assignment/revocation
-                // and instead delegates that responsibility to the application.
-                builder.SetPartitionsRevokedHandler((consumer, tpo) => { });
-            }
-            catch (InvalidOperationException) { }
+            InvokeOnConsumerBuilder(builder);
 
             var consumer = builder.Build();
             consumer.Subscribe(configuration.Topic);
 
-            CallOnReady();
+            InvokeOnReady();
 
             return provider.CreateInstance<ConsumerWrapper<TMessage>>(consumer, configuration);
         }
 
-        private void CallOnReady()
+        private void InvokeOnReady()
             => typeof(T)
                 .GetMethod("OnReady")?
-                .Invoke(consumerObj, Array.Empty<object>());
+                .Invoke(consumerObj, []);
 
-        public void CallOnConsumerConfiguration()
+        public void InvokeOnConsumerConfiguration()
             => typeof(T)
                 .GetMethod("OnConsumerConfiguration")?
-                .Invoke(consumerObj, new object[] { configuration.ConsumerConfig });
+                .Invoke(consumerObj, [configuration.ConsumerConfig]);
 
-        public void CallOnConsumerBuilder(ConsumerBuilder<string, string> builder)
+        public void InvokeOnConsumerBuilder(ConsumerBuilder<string, string> builder)
             => typeof(T)
                 .GetMethod("OnConsumerBuilder")?
-                .Invoke(consumerObj, new object[] { builder });
+                .Invoke(consumerObj, [builder]);
     }
 }

@@ -1,3 +1,9 @@
+# 8.1.0
+### Enhancements
+- Added Consumer and Producer distributed tracing. You can activate by calling the `AddReactiveKafkaInstrumentation()` method on the **TracerProviderBuilder** instance.
+- Added a new example project to demonstrate traces in action.
+- Updated Confluent Kafka library from 1.9.3 to 2.3.0.
+
 # 8.0.0
 ### Enhancements
 - Updated to .NET 8 (Major version will now be related to the .NET version used).

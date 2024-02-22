@@ -1,0 +1,31 @@
+name: Deploy Workflow
+on:
+  push:
+    branches:
+      - 'release/**'
+
+env:
+  CONFIGURATION: "Release"
+  DOTNETVERSION: "8.0.x"
+
+jobs:
+  pipeline:
+    name: CI Workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNETVERSION }}
+
+      - name: publish on version change
+        id: publish_nuget
+        uses: brandedoutcast/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: src/Reactive.Kafka.csproj
+          BUILD_CONFIGURATION: Release
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_SOURCE: https://api.nuget.org

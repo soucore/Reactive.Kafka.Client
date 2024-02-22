@@ -14,7 +14,7 @@
 
         public ProducerWrapper Build()
         {
-            CallOnProducerBuilder();
+            InvokeOnProducerBuilder();
 
             if (string.IsNullOrEmpty(configuration.BootstrapServers))
                 return null;
@@ -25,11 +25,11 @@
             return provider.CreateInstance<ProducerWrapper>(producer);
         }
 
-        public void CallOnProducerBuilder()
+        public void InvokeOnProducerBuilder()
         {
             typeof(T)
                 .GetMethod("OnProducerConfiguration")?
-                .Invoke(consumerObj, new object[] { configuration });
+                .Invoke(consumerObj, [configuration]);
         }
     }
 }

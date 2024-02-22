@@ -275,6 +275,38 @@ await host.RunConsumersAsync();
 await host.RunAsync();
 ```
 
+## OpenTelemetry Tracing
+
+Reactive Kafka has builtin consumer and producer instrumentation. To enable, `AddReactiveKafkaInstrumentation()`
+should be called on the **TracerProviderBuilder**. No additional configuration is required, after that all consumers
+and producers will be instrumented.
+
+```cs
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Reactive.Kafka.Extensions;
+using Reactive.Kafka.Extensions.OpenTelemetry;
+
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddOpenTelemetry()
+            .WithTracing(tracerProviderBuilder => tracerProviderBuilder
+                .ConfigureResource(r => r.AddService("consumer-with-tracing"))
+                .AddJaegerExporter() // Jaeger to view traces
+                .AddReactiveKafkaInstrumentation());
+
+        services.AddReactiveKafka((provider, configurator) =>
+        {
+            configurator.AddConsumerPerPartition<Consumer1, string>("localhost:9092", "your-topic", "your-group");
+        });
+    })
+    .Build();
+
+await host.RunConsumersAsync();
+await host.RunAsync();
+```
+
 ## Contributing
 
 All PRs are welcome. If you are planning to contribute a large patch or to
