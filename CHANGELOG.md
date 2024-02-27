@@ -1,3 +1,12 @@
+# 8.1.1
+### Enhancements
+- Producers will forward traceparent and tracestate of current activity (if any) through meassage headers.
+- Consumers will define traceid, spainid, parentid and tracestate in the current activity (if they appear in message headers and tracing is enabled).
+
+### Fixes
+- `OnConsumerError` was not firing on serialization failure.
+
+
 # 8.1.0
 ### Enhancements
 - Added Consumer and Producer distributed tracing. You can activate by calling the `AddReactiveKafkaInstrumentation()` method on the **TracerProviderBuilder** instance.

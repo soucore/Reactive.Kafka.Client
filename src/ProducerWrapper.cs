@@ -1,6 +1,4 @@
-﻿using Reactive.Kafka.Helpers;
-
-namespace Reactive.Kafka;
+﻿namespace Reactive.Kafka;
 
 internal sealed class ProducerWrapper : IProducerWrapper
 {
@@ -22,7 +20,7 @@ internal sealed class ProducerWrapper : IProducerWrapper
         ProducerLogger.LogDebug(
             "Inserting message '{MessageValue}' on topic '{TopicName}' synchronous.", message.Value, topic);
 
-        using var activity = ActivityHelper.CreateProducerActivity(topic);
+        using var activity = ActivityHelper.CreateProducerActivity(topic, message);
 
         try
         {
@@ -39,7 +37,7 @@ internal sealed class ProducerWrapper : IProducerWrapper
         ProducerLogger.LogDebug(
             "Inserting message '{MessageValue}' on topic '{TopicName}' asynchronous.", message.Value, topic);
 
-        using var activity = ActivityHelper.CreateProducerActivity(topic);
+        using var activity = ActivityHelper.CreateProducerActivity(topic, message);
 
         try
         {

@@ -1,16 +1,12 @@
-﻿using System.Diagnostics;
-
-namespace Reactive.Kafka.Extensions;
+﻿namespace Reactive.Kafka.Extensions;
 
 internal static class ActivityExtensions
 {
-    public static Activity SetError(this Activity activity, Exception exception)
+    public static Activity SetError(this Activity activity, Exception exception, in TagList tags = default)
     {
-        return activity?.SetError(exception.Message);
-    }
+        activity?.RecordException(exception, tags);
+        activity?.SetStatus(ActivityStatusCode.Error);
 
-    public static Activity SetError(this Activity activity, string message)
-    {
-        return activity?.SetStatus(ActivityStatusCode.Error, message);
+        return activity;
     }
 }

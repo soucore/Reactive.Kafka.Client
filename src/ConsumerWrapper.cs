@@ -1,7 +1,4 @@
-﻿using Reactive.Kafka.Helpers;
-using System.Diagnostics;
-
-namespace Reactive.Kafka;
+﻿namespace Reactive.Kafka;
 
 #region Custom Delegates
 public delegate Task EventHandlerAsync<in TMessage>(TMessage e, ConsumerContext context, CancellationToken cancellationToken);
@@ -121,7 +118,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
     private void HandleKafkaOrConsumeException(Exception ex)
     {
-        ConsumerActivity.SetError(ex);
+        TagList tags = default;
 
         if (ex is ConsumeException)
             ConsumerLogger.LogError(ex, "Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
@@ -129,8 +126,13 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         if (ex is KafkaException)
             ConsumerLogger.LogError(ex, "{ErrorMessage}", "An internal kafka error has occurred.");
 
-        if (ex is KafkaSerializationException)
+        if (ex is ConversionException)
+        {
             ConsumerLogger.LogError(ex, "Unable convert message to {TypeName}", typeof(T).Name);
+            tags.Add("exception.kafka.message", Context.ConsumeResult.Message.Value);
+        }
+
+        ConsumerActivity.SetError(ex, tags);
 
         Context.Exception = ex;
         OnConsumeError?.Invoke(Context).Wait();
