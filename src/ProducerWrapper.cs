@@ -20,10 +20,11 @@ internal sealed class ProducerWrapper : IProducerWrapper
         ProducerLogger.LogDebug(
             "Inserting message '{MessageValue}' on topic '{TopicName}' synchronous.", message.Value, topic);
 
-        using var activity = ActivityHelper.CreateProducerActivity(topic, message);
+        using var activity = ActivityHelper.CreateProducerActivity(topic, message, Producer.Name);
 
         try
         {
+            using var _ = MeterHelper.RecordProducerPublishDuration(topic);
             Producer.Produce(topic, message);
         }
         catch (Exception ex)
@@ -37,11 +38,21 @@ internal sealed class ProducerWrapper : IProducerWrapper
         ProducerLogger.LogDebug(
             "Inserting message '{MessageValue}' on topic '{TopicName}' asynchronous.", message.Value, topic);
 
-        using var activity = ActivityHelper.CreateProducerActivity(topic, message);
+        using var activity = ActivityHelper.CreateProducerActivity(topic, message, Producer.Name);
 
         try
         {
-            return await Producer.ProduceAsync(topic, message);
+            DeliveryResult<string, string> deliveryResult;
+
+            using (MeterHelper.RecordProducerPublishDuration(topic))
+            {
+                deliveryResult = await Producer.ProduceAsync(topic, message);
+            }
+
+            ActivityHelper
+                .SetPartitionOffsetTags(activity, deliveryResult.TopicPartitionOffset);
+
+            return deliveryResult;
         }
         catch (Exception ex)
         {

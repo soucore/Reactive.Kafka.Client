@@ -1,20 +1,17 @@
-﻿namespace Reactive.Kafka.Bindings
+﻿namespace Reactive.Kafka.Bindings;
+
+internal sealed class ProducerBinding(object source, object target) : Binding(source, target)
 {
-    internal sealed class ProducerBinding : Binding
+    private const string onProduce = "OnProduce";
+    private const string onProduceAsync = "OnProduceAsync";
+
+    public void BindOnProduce()
     {
-        private const string onProduce = "OnProduce";
-        private const string onProduceAsync = "OnProduceAsync";
+        Bind(onProduce, onProduce);
+    }
 
-        public ProducerBinding(object source, object target) : base(source, target) { }
-
-        public void BindOnProduce()
-        {
-            Bind(onProduce, onProduce);
-        }
-
-        public void BindOnProduceAsync()
-        {
-            Bind(onProduceAsync, onProduceAsync);
-        }
+    public void BindOnProduceAsync()
+    {
+        Bind(onProduceAsync, onProduceAsync);
     }
 }

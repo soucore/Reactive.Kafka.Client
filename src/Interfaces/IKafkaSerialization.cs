@@ -26,4 +26,4 @@ public interface IKafkaSerialization<T> : IKafkaSerialization
     T OnAfterSerialization(T message);
 }
 
-public interface IKafkaSerialization { }
+public interface IKafkaSerialization;

@@ -1,13 +1,8 @@
 ﻿namespace Reactive.Kafka;
 
-public sealed class KafkaAdmin : IKafkaAdmin
+public sealed class KafkaAdmin(ILoggerFactory loggerFactory) : IKafkaAdmin
 {
-    private readonly ILogger _logger;
-
-    public KafkaAdmin(ILoggerFactory loggerFactory)
-    {
-        _logger = loggerFactory.CreateLogger("Reactive.Kafka.Admin");
-    }
+    private readonly ILogger _logger = loggerFactory.CreateLogger("Reactive.Kafka.Admin");
 
     public int Partitions(KafkaConfiguration configuration)
     {

@@ -1,30 +1,23 @@
-﻿namespace Reactive.Kafka.Bindings
+﻿namespace Reactive.Kafka.Bindings;
+
+internal class Binding(object source, object target)
 {
-    internal class Binding
+    protected readonly object source = source;
+    protected readonly object target = target;
+
+    public void Bind(string @event, string method)
     {
-        protected readonly object source;
-        protected readonly object target;
+        CreateDelegate(source, @event, target, method);
+    }
 
-        public Binding(object source, object target)
+    public static void CreateDelegate(object source, string @event, object target, string method)
+    {
+        if (!string.IsNullOrEmpty(method))
         {
-            this.source = source;
-            this.target = target;
-        }
+            var eventInfo = source.GetType().GetEvent(@event);
+            var @delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, target, method);
 
-        public void Bind(string @event, string method)
-        {
-            CreateDelegate(source, @event, target, method);
-        }
-
-        public void CreateDelegate(object source, string @event, object target, string method)
-        {
-            if (!string.IsNullOrEmpty(method))
-            {
-                var eventInfo = source.GetType().GetEvent(@event);
-                var @delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, target, method);
-
-                eventInfo.AddEventHandler(source, @delegate);
-            }
+            eventInfo.AddEventHandler(source, @delegate);
         }
     }
 }

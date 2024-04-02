@@ -59,7 +59,9 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 if (result is null)
                     continue;
 
-                ConsumerActivity = ActivityHelper.CreateConsumerActivity(result, Consumer.MemberId);
+                MeterHelper.RecordConsumerLag(result);
+
+                ConsumerActivity = ActivityHelper.CreateConsumerActivity(result, Consumer.MemberId, Configuration.ConsumerConfig.GroupId);
                 Context.SetResult(result);
 
                 InvokeOnBeforeSerialization(result);
@@ -113,7 +115,12 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     private void InvokeOnConsume(ConsumeResult<string, string> result, T message)
     {
         var consumerMessage = new ConsumerMessage<T>(result.Message.Key, message);
-        OnConsume?.Invoke(consumerMessage, Context, default).Wait(CancellationToken.None);
+
+        using var _ = MeterHelper.RecordConsumerProcessDuration(result);
+
+        // We must use GetWaiter() to not
+        // terminate our LongRunning thread.
+        OnConsume?.Invoke(consumerMessage, Context, default).GetAwaiter().GetResult();
     }
 
     private void HandleKafkaOrConsumeException(Exception ex)
@@ -135,7 +142,7 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         ConsumerActivity.SetError(ex, tags);
 
         Context.Exception = ex;
-        OnConsumeError?.Invoke(Context).Wait();
+        OnConsumeError?.Invoke(Context).GetAwaiter().GetResult();
     }
 
     private void HandleUserCodeException(Exception ex)

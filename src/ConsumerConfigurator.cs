@@ -2,17 +2,8 @@
 
 namespace Reactive.Kafka;
 
-public class ConsumerConfigurator : IConsumerConfigurator
+public class ConsumerConfigurator(IList<IConsumerWrapper> consumerWrapperCollection, IServiceProvider provider) : IConsumerConfigurator
 {
-    private readonly IList<IConsumerWrapper> consumerWrapperCollection;
-    private readonly IServiceProvider provider;
-
-    public ConsumerConfigurator(IList<IConsumerWrapper> consumerWrapperCollection, IServiceProvider provider)
-    {
-        this.consumerWrapperCollection = consumerWrapperCollection;
-        this.provider = provider;
-    }
-
     public void AddConsumerPerPartition<T, TMessage>(string bootstrapServer, string topic, string groupId = default)
         where T : IKafkaConsumer<TMessage>
     {

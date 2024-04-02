@@ -1,35 +1,32 @@
-﻿namespace Reactive.Kafka.Bindings
+﻿namespace Reactive.Kafka.Bindings;
+
+internal sealed class ConsumerBinding(object source, object target) : Binding(source, target)
 {
-    internal sealed class ConsumerBinding : Binding
+    private const string onConsume = "OnConsume";
+    private const string onBeforeSerialization = "OnBeforeSerialization";
+    private const string onAfterSerialization = "OnAfterSerialization";
+    private const string onConsumeError = "OnConsumeError";
+
+    public void BindOnConsume()
     {
-        private const string onConsume = "OnConsume";
-        private const string onBeforeSerialization = "OnBeforeSerialization";
-        private const string onAfterSerialization = "OnAfterSerialization";
-        private const string onConsumeError = "OnConsumeError";
+        Bind(onConsume, onConsume);
+    }
 
-        public ConsumerBinding(object source, object target) : base(source, target) { }
+    public void BindOnBeforeSerialization()
+    {
+        if (target is IKafkaSerialization)
+            Bind(onBeforeSerialization, onBeforeSerialization);
+    }
 
-        public void BindOnConsume()
-        {
-            Bind(onConsume, onConsume);
-        }
+    public void BindOnAfterSerialization()
+    {
+        if (target is IKafkaSerialization)
+            Bind(onAfterSerialization, onAfterSerialization);
+    }
 
-        public void BindOnBeforeSerialization()
-        {
-            if (target is IKafkaSerialization)
-                Bind(onBeforeSerialization, onBeforeSerialization);
-        }
-
-        public void BindOnAfterSerialization()
-        {
-            if (target is IKafkaSerialization)
-                Bind(onAfterSerialization, onAfterSerialization);
-        }
-
-        public void BindOnConsumeError()
-        {
-            if (target is IKafkaConsumerError)
-                Bind(onConsumeError, onConsumeError);
-        }
+    public void BindOnConsumeError()
+    {
+        if (target is IKafkaConsumerError)
+            Bind(onConsumeError, onConsumeError);
     }
 }

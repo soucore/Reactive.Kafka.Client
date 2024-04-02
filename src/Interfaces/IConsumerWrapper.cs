@@ -1,9 +1,6 @@
 ﻿namespace Reactive.Kafka.Interfaces;
 
-public interface IConsumerWrapper<T> : IConsumerWrapper
-{
-
-}
+public interface IConsumerWrapper<T> : IConsumerWrapper;
 
 public interface IConsumerWrapper
 {

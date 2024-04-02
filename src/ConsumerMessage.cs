@@ -1,13 +1,7 @@
 ﻿namespace Reactive.Kafka;
 
-public sealed class ConsumerMessage<T>
+public sealed class ConsumerMessage<T>(string key, T message)
 {
-    public ConsumerMessage(string key, T message)
-    {
-        Key = key;
-        Value = message;
-    }
-
-    public string Key { get; }
-    public T Value { get; }
+    public string Key { get; } = key;
+    public T Value { get; } = message;
 }

@@ -2,7 +2,7 @@
 
 namespace Reactive.Kafka.Tests;
 
-public class HelperConvertTest
+public class ConvertHelperTest
 {
     [Fact]
     public void TryChangeTypeIsTrue()
