@@ -42,8 +42,21 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     {
         ConsumerLogger.LogInformation("Initializing consumer {ConsumerName}", Consumer.Name);
 
-        return Task.Factory.StartNew(
-            () => InternalConsume(taskCompletionSource, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+        return Task.Factory
+            .StartNew(() => InternalConsume(taskCompletionSource, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Current)
+            .ContinueWith(ContinueWith);
+
+        // We must perfom these actions with a
+        // graceful shutdown or a shutdown caused
+        // by an unhandled exception.
+        void ContinueWith(Task continuationAction)
+        {
+            ConsumerLogger.LogInformation("Stopping consumer {ConsumerName}", Consumer.Name);
+            ConsumerActivity?.Stop();
+            Consumer.Close();
+
+            taskCompletionSource?.TrySetResult(null);
+        }
     }
 
     #region Non-Public Methods
@@ -92,12 +105,6 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
                 throw;
             }
         }
-
-        ConsumerLogger.LogInformation("Stopping consumer {ConsumerName}", Consumer.Name);
-        ConsumerActivity?.Stop();
-        Consumer.Close();
-
-        taskCompletionSource?.TrySetResult(null);
     }
 
     private void InvokeOnBeforeSerialization(ConsumeResult<string, string> result)

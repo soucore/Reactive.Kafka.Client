@@ -17,6 +17,7 @@ public abstract class ConsumerBase<T> : IKafkaConsumer<T>, IKafkaConsumerConfigu
     public virtual void OnReady() { }
 
     public virtual void OnProducerConfiguration(ProducerConfig configuration) { }
+    public virtual void OnProducerBuilder(ProducerBuilder<string, string> builder) { }
     public virtual void OnConsumerConfiguration(ConsumerConfig configuration) { }
     public virtual void OnConsumerBuilder(ConsumerBuilder<string, string> builder) { }
     public virtual Task OnConsumeError(ConsumerContext context)

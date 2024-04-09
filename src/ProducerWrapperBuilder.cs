@@ -6,21 +6,29 @@ internal sealed class ProducerWrapperBuilder<T>(object consumerObj, IServiceProv
 
     public ProducerWrapper Build()
     {
-        InvokeOnProducerBuilder();
+        InvokeOnProducerConfiguration();
 
         if (string.IsNullOrEmpty(configuration.BootstrapServers))
             return null;
 
         var producerBuilder = new ProducerBuilder<string, string>(configuration);
-        var producer = producerBuilder.Build();
 
-        return provider.CreateInstance<ProducerWrapper>(producer);
+        InvokeOnProducerBuilder(producerBuilder);
+
+        return provider.CreateInstance<ProducerWrapper>(producerBuilder.Build());
     }
 
-    public void InvokeOnProducerBuilder()
+    public void InvokeOnProducerConfiguration()
     {
         typeof(T)
             .GetMethod("OnProducerConfiguration")?
             .Invoke(consumerObj, [configuration]);
+    }
+
+    public void InvokeOnProducerBuilder(ProducerBuilder<string, string> builder)
+    {
+        typeof(T)
+            .GetMethod("OnProducerBuilder")?
+            .Invoke(consumerObj, [builder]);
     }
 }

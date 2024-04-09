@@ -10,7 +10,7 @@ internal static class MeterHelper
     private static readonly Histogram<long> _publishDuration = _meter.CreateHistogram<long>("messaging.kafka.producer.publish.duration", "ms", "");
     #endregion
 
-    internal static void RecordConsumerLag(ConsumeResult<string, string> consumeResult)
+    public static void RecordConsumerLag(ConsumeResult<string, string> consumeResult)
     {
         if (!_consumerLag.Enabled) return;
 
@@ -26,7 +26,7 @@ internal static class MeterHelper
         _consumerLag.Record(receivedAt - insertedOn, tags);
     }
 
-    internal static MeterDuration RecordConsumerProcessDuration(ConsumeResult<string, string> consumeResult)
+    public static MeterDuration RecordConsumerProcessDuration(ConsumeResult<string, string> consumeResult)
     {
         if (!_processDuration.Enabled)
         {
@@ -38,7 +38,7 @@ internal static class MeterHelper
         ]);
     }
 
-    internal static MeterDuration RecordProducerPublishDuration(string topic)
+    public static MeterDuration RecordProducerPublishDuration(string topic)
     {
         if (!_publishDuration.Enabled)
         {
@@ -50,14 +50,16 @@ internal static class MeterHelper
         ]);
     }
 
-    internal class MeterDuration(Histogram<long> histogram, KeyValuePair<string, object>[] tags) : IDisposable
+    public class MeterDuration(Histogram<long> histogram, KeyValuePair<string, object>[] tags) : IDisposable
     {
         private readonly Stopwatch stopwatch = Stopwatch.StartNew();
 
         public void Dispose()
         {
-            stopwatch.Stop();
+            GC.SuppressFinalize(this);
+
             histogram.Record(stopwatch.ElapsedMilliseconds, tags);
+            stopwatch.Stop();
         }
     }
 }
