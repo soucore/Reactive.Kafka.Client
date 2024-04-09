@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>8.1.1</Version>
+    <Version>8.2.0</Version>
     <Authors>SouCore Community</Authors>
     <Product>Reactive Kafka Client</Product>
     <Description>Abstract and simplify integrations with confluent kafka</Description>

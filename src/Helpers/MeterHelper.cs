@@ -12,7 +12,10 @@ internal static class MeterHelper
 
     public static void RecordConsumerLag(ConsumeResult<string, string> consumeResult)
     {
-        if (!_consumerLag.Enabled) return;
+        if (!_consumerLag.Enabled)
+        {
+            return;
+        }
 
         long insertedOn = consumeResult.Message.Timestamp.UnixTimestampMs;
         long receivedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
