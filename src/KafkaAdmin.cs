@@ -12,10 +12,18 @@ public sealed class KafkaAdmin(ILoggerFactory loggerFactory) : IKafkaAdmin
         }).Build();
 
         var topicMetadata = GetTopicMetadata(adminClient, configuration.Topic);
-        var topicPartitions = topicMetadata?.Partitions.Count ?? 0;
+        var topicPartitions = topicMetadata?.Partitions.Count ?? 1;
 
-        if (_logger.IsEnabled(LogLevel.Debug))
-            _logger.LogDebug("Topic {Topic} has {Partitions} partitions.", configuration.Topic, topicPartitions);
+        if (topicMetadata is null)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Unable to obtain metadata for topic '{Topic}'. Assuming 1 partition.", configuration.Topic);
+        }
+        else
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Topic '{Topic}' has {Partitions} partitions.", configuration.Topic, topicPartitions);
+        }
 
         return topicPartitions;
     }

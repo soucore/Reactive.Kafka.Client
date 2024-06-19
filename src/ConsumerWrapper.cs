@@ -13,7 +13,8 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     public event EventHandlerAsync<ConsumerMessage<T>> OnConsume;
     #endregion
 
-    private readonly Func<string, KafkaConfiguration, (bool, T)> convertMessage;
+    private readonly Func<string, KafkaConfiguration, (bool, T, Exception)> convertMessage;
+    private readonly string typeName;
 
     public ConsumerWrapper(ILoggerFactory loggerFactory, IConsumer<string, string> consumer, KafkaConfiguration configuration)
     {
@@ -27,6 +28,8 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
         convertMessage = Type.GetTypeCode(typeof(T)) == TypeCode.Object
             ? Convert<T>.TrySerializeType
             : Convert<T>.TryChangeType;
+
+        typeName = typeof(T).Name;
     }
 
     #region Properties
@@ -79,15 +82,15 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
 
                 InvokeOnBeforeSerialization(result);
 
-                var (success, message) = convertMessage(result.Message.Value, Configuration);
+                var (success, message, exception) = convertMessage(result.Message.Value, Configuration);
                 if (!success)
                 {
-                    throw new ConversionException($"Unable convert message to {typeof(T).Name}");
+                    throw new ConversionException($"Unable convert message to {typeName}", exception);
                 }
 
                 InvokeOnAfterSerialization(ref message);
 
-                ConsumerLogger.LogDebug("Message converted successfully to '{TypeName}'", typeof(T).Name);
+                ConsumerLogger.LogDebug("Message converted successfully to '{TypeName}'", typeName);
 
                 InvokeOnConsume(result, message);
             }
@@ -134,16 +137,20 @@ public sealed class ConsumerWrapper<T> : IConsumerWrapper<T>
     {
         TagList tags = default;
 
-        if (ex is ConsumeException)
-            ConsumerLogger.LogError(ex, "Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
-
-        if (ex is KafkaException)
-            ConsumerLogger.LogError(ex, "{ErrorMessage}", "An internal kafka error has occurred.");
-
-        if (ex is ConversionException)
+        switch (ex)
         {
-            ConsumerLogger.LogError(ex, "Unable convert message to {TypeName}", typeof(T).Name);
-            tags.Add("exception.kafka.message", Context.ConsumeResult.Message.Value);
+            case ConsumeException:
+                ConsumerLogger.LogError(ex, "Unable to consume messages from consumer {ConsumerName}.", Consumer.Name);
+                break;
+
+            case KafkaException:
+                ConsumerLogger.LogError(ex, "{ErrorMessage}", "An internal kafka error has occurred.");
+                break;
+
+            case ConversionException:
+                ConsumerLogger.LogError(ex, "Unable convert message to {TypeName}", typeof(T).Name);
+                tags.Add("exception.kafka.message", Context.ConsumeResult.Message.Value);
+                break;
         }
 
         ConsumerActivity.SetError(ex, tags);

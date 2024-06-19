@@ -6,20 +6,22 @@ namespace Reactive.Kafka.Helpers;
 
 public static class Convert<T>
 {
-    public static (bool Success, T Message) TryChangeType(string value, KafkaConfiguration configuration)
+    private static readonly Type type = typeof(T);
+
+    public static (bool Success, T Message, Exception ex) TryChangeType(string value, KafkaConfiguration configuration)
     {
         try
         {
-            T output = (T)Convert.ChangeType(value, typeof(T));
-            return (true, output);
+            T output = (T)Convert.ChangeType(value, type);
+            return (true, output, default);
         }
-        catch
+        catch (Exception ex)
         {
-            return (false, default);
+            return (false, default, ex);
         }
     }
 
-    public static (bool Success, T Message) TrySerializeType(string value, KafkaConfiguration configuration)
+    public static (bool Success, T Message, Exception ex) TrySerializeType(string value, KafkaConfiguration configuration)
     {
         try
         {
@@ -30,11 +32,11 @@ public static class Convert<T>
             else
                 output = Deserialize<T>(value, configuration.JsonSerializerOptions);
 
-            return (true, output);
+            return (true, output, default);
         }
-        catch
+        catch (Exception ex)
         {
-            return (false, default);
+            return (false, default, ex);
         }
     }
 

@@ -12,7 +12,7 @@ public class ConvertHelperTest
         const int expected = 2;
 
         // Act
-        (bool success, int result) = Convert<int>.TryChangeType(value, new());
+        (bool success, int result, _) = Convert<int>.TryChangeType(value, new());
 
         // Assert
         Assert.True(success);
@@ -27,7 +27,7 @@ public class ConvertHelperTest
         const int expected = 0;
 
         // Act
-        (bool success, int result) = Convert<int>.TryChangeType(value, new());
+        (bool success, int result, _) = Convert<int>.TryChangeType(value, new());
 
         // Assert
         Assert.False(success);
@@ -42,7 +42,7 @@ public class ConvertHelperTest
         const string expected = "MessageTest { Id = 0, Name = Kafka }";
 
         // Act
-        (bool success, MessageTest result) = Convert<MessageTest>.TrySerializeType(str, new());
+        (bool success, MessageTest result, _) = Convert<MessageTest>.TrySerializeType(str, new());
 
         // Assert
         Assert.True(success);
@@ -56,7 +56,7 @@ public class ConvertHelperTest
         const string str = "valor";
 
         // Act
-        (bool success, MessageTest result) = Convert<MessageTest>.TrySerializeType(str, new());
+        (bool success, MessageTest result, _) = Convert<MessageTest>.TrySerializeType(str, new());
 
         // Assert
         Assert.False(success);
