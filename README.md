@@ -14,19 +14,19 @@ Features:
 - Specific method for the correct treatment of **error messages**.
 - Exclusive thread per consumer.
 - Inject anything from DI (Dependency Injection) in your consumer.
-- Consumer and producer builtin OpenTelemetry tracing.
+- Consumer and Producer built-in OpenTelemetry support.
 
 ## Installation
 To install Reactive.Kafka.Client from within Visual Studio, search for Reactive.Kafka.Client in the NuGet Package Manager UI, or run the following command in the Package Manager Console:
 
 ```
-Install-Package Reactive.Kafka.Client -Version 8.1.1
+Install-Package Reactive.Kafka.Client -Version 8.2.0
 ```
 
 To add a reference to a dotnet core project, execute the following at the command line:
 
 ```
-dotnet add package -v 8.1.1 Reactive.Kafka.Client
+dotnet add package -v 8.2.0 Reactive.Kafka.Client
 ```
 
 ## Message lifecycle
@@ -60,6 +60,7 @@ Only `OnConsume` is required. The others are not required and you implement just
 | OnConsumerConfiguration | `ConsumerConfig` configuration | Called once, for each consumer instance, during the consumer setup process. | No |
 | OnProducerConfiguration | `ProducerConfig` configuration | Called once, for each consumer instance, during the producer setup process. | No |
 | OnConsumerBuilder | | Called once, for each consumer instance, before the kafka consumer is built. | No |
+| OnProducerBuilder | | Called once, for each producer instance, before the kafka producer is built. | No |
 | OnReady | | Called once, for each consumer instance, after the kafka consumer is built. | No |
 | OnBeforeSerialization | Raw message handling | Called after topic message consumption and before `OnAfterSerialization`. | No |
 | OnAfterSerialization | Message enrichment | Called after the serialization process, may not occur if serialization fails. | No |
@@ -276,36 +277,65 @@ await host.RunConsumersAsync();
 await host.RunAsync();
 ```
 
-## OpenTelemetry Tracing
+## OpenTelemetry Support
 
-Reactive Kafka has builtin consumer and producer instrumentation. To enable, `AddReactiveKafkaInstrumentation()`
-should be called on the **TracerProviderBuilder**. No additional configuration is required, after that all consumers
-and producers will be instrumented.
+Reactive Kafka has built-in consumer and producer instrumentation.
+<br/>
+To enable, `AddReactiveKafkaInstrumentation()` should be called on the **TracerProviderBuilder** and **MeterProviderBuilder**.
+<br/>
+No additional configuration is required, after that all consumers and producers will be instrumented.
 
-```cs
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using Reactive.Kafka.Extensions;
-using Reactive.Kafka.Extensions.OpenTelemetry;
+It is necessary to install OpenTelemetry packages.
+- `OpenTelemetry`
+- `OpenTelemetry.Extensions.Hosting`
+- `OpenTelemetry.Exporter.OpenTelemetryProtocol`
 
+### Metrics
+
+In case you want to export metrics directly in Prometheus format, you will need to install the Prometheus exporter package.
+- `OpenTelemetry.Exporter.Prometheus.AspNetCore`
+
+| Name | Unit | Type | Description |
+|------|------|-------------|----|
+| messaging_kafka_consumer_lag | ms | Histogram | Approximate lag between the time message was send and received. |
+| messaging.kafka.consumer.process.duration | ms | Histogram | Message processing duration. |
+| messaging.kafka.producer.publish.duration | ms | Histogram | Message publishing duration. |
+
+```csharp
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddOpenTelemetry()
+            .WithMetrics(meterProviderBuilder => meterProviderBuilder
+                .AddOtlpExporter()        // OpenTelemetry Protocol Exporter
+                .AddPrometheusExporter()  // Prometheus Exporter
+                .AddReactiveKafkaInstrumentation());
+
+        services.AddReactiveKafka((provider, configurator) =>
+        {
+            configurator.AddConsumerPerPartition<Consumer1, Message>("localhost:9092", "your-topic", "your-group");
+        });
+    })
+    .Build();
+```
+
+### Tracing
+
+```csharp
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddOpenTelemetry()
             .WithTracing(tracerProviderBuilder => tracerProviderBuilder
-                .ConfigureResource(r => r.AddService("consumer-with-tracing"))
-                .AddJaegerExporter() // Jaeger to view traces
+                .AddOtlpExporter()        // OpenTelemetry Protocol Exporter
                 .AddReactiveKafkaInstrumentation());
 
         services.AddReactiveKafka((provider, configurator) =>
         {
-            configurator.AddConsumerPerPartition<Consumer1, string>("localhost:9092", "your-topic", "your-group");
+            configurator.AddConsumerPerPartition<Consumer1, Message>("localhost:9092", "your-topic", "your-group");
         });
     })
     .Build();
-
-await host.RunConsumersAsync();
-await host.RunAsync();
 ```
 
 ## Contributing
