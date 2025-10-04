@@ -1,3 +1,10 @@
+# 9.0.0
+### Enhancements
+- Framework update to net9.0
+- Removal of the *OpenTelemetry.Exporter.Jaeger* package. Jaeger can now ingest traces in OTLP format by default, as stated in [OpenTelemetry.Exporter.Jaeger](https://www.nuget.org/packages/OpenTelemetry.Exporter.Jaeger/)
+- Telemetry package updates
+- Updated *Microsoft.Extensions.** packages to 9.0.9
+
 # 8.1.1
 ### Enhancements
 - Producers will forward traceparent and tracestate of current activity (if any) through meassage headers.

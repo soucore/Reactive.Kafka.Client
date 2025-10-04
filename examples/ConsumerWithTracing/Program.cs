@@ -10,7 +10,6 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddOpenTelemetry()
             .WithTracing(tracerProviderBuilder => tracerProviderBuilder
                 .ConfigureResource(r => r.AddService("consumer-with-tracing"))
-                .AddJaegerExporter() // Jaeger to view traces
                 .AddHttpClientInstrumentation()
                 .AddReactiveKafkaInstrumentation());
 
